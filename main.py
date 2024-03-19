@@ -1,3 +1,5 @@
+#!venv/bin/python3
+
 # Import the required Kivy modules
 from kivy.app import App
 from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
@@ -17,12 +19,16 @@ WIDTH=16
 HEIGHT=16
 # Set the window size
 Window.size = (800, 480)
+Window.virtual_keyboard_mode = 'dock'
 Config.set('kivy', 'keyboard_mode', 'dock')
 
 Matrix = MatrixProtocol()
+serial_ports = Matrix.scan_serial_ports()
 
 # Define the field button
 class PixelButton(ToggleButton):
+    led = 0
+
     def __init__(self, **kwargs):
         super(PixelButton, self).__init__(**kwargs)
         self.background_color = (0, 0, 0, 1)  # black color
@@ -31,10 +37,16 @@ class PixelButton(ToggleButton):
         self.touched = False
 
     def on_state(self, instance, value):
+        x = self.led % WIDTH
+        y = self.led // WIDTH
         if value == 'down':  # button is pressed
             self.background_color = (1, 1, 1, 1)  # white color
+            print(self.led, "on")
+            Matrix.set_pixel(x, y, (255, 255, 255))
         else:
             self.background_color = (0, 0, 0, 1)  # black color
+            print(self.led, "off")
+            Matrix.set_pixel(x, y, (0, 0, 0))
 
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos) and touch.button == 'left':
@@ -63,6 +75,7 @@ class DrawTab(TabbedPanelItem):
         self.pixel_buttons = []
         for i in range(WIDTH * HEIGHT):
             pixel_button = PixelButton()
+            pixel_button.led = i
             self.pixel_buttons.append(pixel_button)
             draw_grid.add_widget(pixel_button)
         draw_box.add_widget(draw_grid)
@@ -105,7 +118,7 @@ class HomeTab(TabbedPanelItem):
         super(HomeTab, self).__init__(**kwargs)
         self.text = 'Home'
         home_box = BoxLayout(orientation='vertical')
-        connection_box = BoxLayout(orientation='horizontal', size_hint_y=None, height=100, spacing=20)
+        connection_box = BoxLayout(orientation='horizontal', size_hint_y=None, height=70, spacing=20)
 
         # Add connection setup UI
         connection_label = Label(text='Connection', font_size=48, size_hint_y=None, height=80)
@@ -113,18 +126,18 @@ class HomeTab(TabbedPanelItem):
 
         serial_port_label = Label(text='Serial Port:', size_hint_x=0.5)
         connection_box.add_widget(serial_port_label)
-        serial_port_spinner = Spinner(text='/dev/ttyS0', values=Matrix.scan_serial_ports())
-        serial_port_spinner.size_hint_x = 1
-        connection_box.add_widget(serial_port_spinner)
+        self.serial_port_spinner = Spinner(text=str(serial_ports[0]), values=serial_ports)
+        self.serial_port_spinner.size_hint_x = 1
+        connection_box.add_widget(self.serial_port_spinner)
 
         baud_rate_label = Label(text='Baud Rate:', size_hint_x=0.5)
         connection_box.add_widget(baud_rate_label)
-        baud_rate_spinner = Spinner(text='115200', values=('9600', '19200', '38400', '57600', '115200'), size_hint_x=0.5)
-        connection_box.add_widget(baud_rate_spinner)
+        self.baud_rate_spinner = Spinner(text='115200', values=('9600', '19200', '38400', '57600', '115200'), size_hint_x=0.5)
+        connection_box.add_widget(self.baud_rate_spinner)
 
-        connect_button = Button(text='Connect', size_hint_x=0.3)
-        connect_button.bind(on_press=self.connect)
-        connection_box.add_widget(connect_button)
+        self.connect_button = Button(text='Connect', size_hint_x=0.3)
+        self.connect_button.bind(on_release=self.connect)
+        connection_box.add_widget(self.connect_button)
 
         home_box.add_widget(connection_box)
         home_box.add_widget(Label(text=''))
@@ -145,39 +158,18 @@ class HomeTab(TabbedPanelItem):
 # Define the application class
 class FrackMatrixApp(App):
     def build(self):
+
+        screen = BoxLayout(orientation='vertical')
+        dead_area = Label(text=" ", size_hint_y=None, height=60)
+        screen.add_widget(dead_area)
+
         # Create a tabbed panel
         tab_panel = TabbedPanel()
 
 
         # Add a new tab named "Home"
-        home_tab = TabbedPanelItem(text='Home')
-        home_box = BoxLayout(orientation='vertical')
-        connection_box = BoxLayout(orientation='horizontal', size_hint_y=None, height=100, spacing=20)
-
-        # Add connection setup UI
-        connection_label = Label(text='Connection', font_size=48, size_hint_y=None, height=80)
-        home_box.add_widget(connection_label)
-
-        serial_port_label = Label(text='Serial Port:', size_hint_x=0.5)
-        connection_box.add_widget(serial_port_label)
-        serial_port_spinner = Spinner(text='/dev/ttyS0', values=Matrix.scan_serial_ports())
-        serial_port_spinner.size_hint_x = 1
-        connection_box.add_widget(serial_port_spinner)
-
-        baud_rate_label = Label(text='Baud Rate:', size_hint_x=0.5)
-        connection_box.add_widget(baud_rate_label)
-        baud_rate_spinner = Spinner(text='115200', values=('9600', '19200', '38400', '57600', '115200'), size_hint_x=0.5)
-        connection_box.add_widget(baud_rate_spinner)
-
-        connect_button = Button(text='Connect', size_hint_x=0.3)
-        connection_box.add_widget(connect_button)
-
-        home_box.add_widget(connection_box)
-        home_box.add_widget(Label(text=''))
-
-        home_tab.add_widget(home_box)
+        home_tab = HomeTab()
         tab_panel.add_widget(home_tab)
-
 
         # Add a new tab named "Text"
         text_tab = TextTab()
@@ -188,7 +180,8 @@ class FrackMatrixApp(App):
         tab_panel.add_widget(draw_tab)
 
         tab_panel.default_tab = home_tab
-        return tab_panel
+        screen.add_widget(tab_panel)
+        return screen
     
     def reset_pixel_buttons(self, instance):
         for pixel_button in self.pixel_buttons:

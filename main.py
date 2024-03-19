@@ -9,6 +9,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.textinput import TextInput
 from kivy.uix.spinner import Spinner
 from kivy.core.window import Window
+from kivy.config import Config
 
 from matrix_protocol import MatrixProtocol
 
@@ -16,6 +17,7 @@ WIDTH=16
 HEIGHT=16
 # Set the window size
 Window.size = (800, 480)
+Config.set('kivy', 'keyboard_mode', 'dock')
 
 Matrix = MatrixProtocol()
 

@@ -10,6 +10,11 @@ from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.textinput import TextInput
 from kivy.uix.spinner import Spinner
+from kivy.uix.widget import Widget
+from kivy.uix.colorpicker import ColorPicker
+from kivy.uix.popup import Popup
+from kivy.properties import ListProperty
+from kivy.graphics import Color, Line, Rectangle
 from kivy.core.window import Window
 from kivy.config import Config
 
@@ -24,6 +29,66 @@ Config.set('kivy', 'keyboard_mode', 'dock')
 
 Matrix = MatrixProtocol()
 serial_ports = Matrix.scan_serial_ports()
+
+class PaintWidget(Widget):
+    line_color = ListProperty([1, 1, 1])
+    
+    def __init__(self, **kwargs):
+        super(PaintWidget, self).__init__(**kwargs)
+        self.size_hint_y = None
+        self.height = self.width * 2 / 5
+        self.bind(width=self._update_height)
+
+    def _update_height(self, instance, value):
+        self.height = value * 2 / 5
+
+    def on_touch_down(self, touch):
+        if self.collide_point(*touch.pos):
+            with self.canvas:
+                Color(*self.line_color)
+                touch.ud['line'] = Line(points=(touch.x, touch.y), width=16)
+            return True
+        return super(PaintWidget, self).on_touch_down(touch)
+
+    def on_touch_move(self, touch):
+        if self.collide_point(*touch.pos):
+            with self.canvas:
+                if 'line' in touch.ud:
+                    touch.ud['line'].points += [touch.x, touch.y]
+                    return True
+        return super(PaintWidget, self).on_touch_move(touch)
+
+class PaintTab(TabbedPanelItem):
+    def __init__(self, **kwargs):
+        super(PaintTab, self).__init__(**kwargs)
+        self.text = 'Paint'
+        box = BoxLayout(orientation='vertical')
+        btn_box = BoxLayout(orientation='horizontal')
+        self.paint_widget = PaintWidget()
+        color_picker = ColorPicker()
+        color_picker.bind(color=self.on_color)
+        color_picker_popup = Popup(title='Color Picker', content=color_picker, size_hint=(0.8, 0.8))
+        color_button = Button(text='Pick Color')
+        color_button.bind(on_press=color_picker_popup.open)
+        clear_button = Button(text='Clear')
+        clear_button.bind(on_press=self.clear_canvas)
+        save_button = Button(text='Save')
+        save_button.bind(on_press=self.save_canvas)
+        box.add_widget(self.paint_widget)
+        btn_box.add_widget(color_button)
+        btn_box.add_widget(clear_button)
+        btn_box.add_widget(save_button)
+        box.add_widget(btn_box)
+        self.add_widget(box)
+
+    def on_color(self, instance, value):
+        self.paint_widget.line_color = value
+
+    def clear_canvas(self, instance):
+        self.paint_widget.canvas.clear()
+
+    def save_canvas(self, instance):
+        self.paint_widget.export_to_png('drawing.png')
 
 # Define the field button
 class PixelButton(ToggleButton):
@@ -160,12 +225,10 @@ class FrackMatrixApp(App):
     def build(self):
 
         screen = BoxLayout(orientation='vertical')
-        dead_area = Label(text=" ", size_hint_y=None, height=60)
-        screen.add_widget(dead_area)
 
         # Create a tabbed panel
         tab_panel = TabbedPanel()
-
+        tab_panel.tab_height = 200
 
         # Add a new tab named "Home"
         home_tab = HomeTab()
@@ -178,6 +241,11 @@ class FrackMatrixApp(App):
         # Add a new tab named "Draw"
         draw_tab = DrawTab()
         tab_panel.add_widget(draw_tab)
+
+
+        # Add a new tab named "Paint"
+        paint_tab = PaintTab()
+        tab_panel.add_widget(paint_tab)
 
         tab_panel.default_tab = home_tab
         screen.add_widget(tab_panel)

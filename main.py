@@ -17,12 +17,16 @@ from kivy.properties import ListProperty
 from kivy.graphics import Color, Line, Rectangle
 from kivy.core.window import Window
 from kivy.config import Config
+from kivy.clock import Clock
 
 from matrix_protocol import MatrixProtocol
 
 WIDTH=16
 HEIGHT=16
 ASPECT_RATIO=WIDTH/HEIGHT
+TOP_KEEPOUT=120
+BOTTOM_KEEPOUT=0
+
 # Set the window size
 Window.size = (800, 480)
 Window.virtual_keyboard_mode = 'dock'
@@ -36,15 +40,20 @@ class PaintWidget(Widget):
     
     def __init__(self, **kwargs):
         super(PaintWidget, self).__init__(**kwargs)
-        self.size_hint_y = None
-        self.height = self.width * ASPECT_RATIO
+
+        if ASPECT_RATIO > 1:
+            self.size_hint_x = None
+            self.width = self.height * ASPECT_RATIO
+        else:
+            self.size_hint_y = None
+            self.height = self.width * ASPECT_RATIO
         self.bind(width=self._update_height)
 
     def _update_height(self, instance, value):
         self.height = value * ASPECT_RATIO
 
     def on_touch_down(self, touch):
-        if self.collide_point(*touch.pos):
+        if self.collide_point(*touch.pos) and touch.y < (self.top - TOP_KEEPOUT) and touch.y > self.y + BOTTOM_KEEPOUT:
             with self.canvas:
                 Color(*self.line_color)
                 touch.ud['line'] = Line(points=(touch.x, touch.y), width=16)
@@ -52,20 +61,21 @@ class PaintWidget(Widget):
         return super(PaintWidget, self).on_touch_down(touch)
 
     def on_touch_move(self, touch):
-        if self.collide_point(*touch.pos):
-            with self.canvas:
-                if 'line' in touch.ud:
-                    touch.ud['line'].points += [touch.x, touch.y]
-                    return True
+        if self.collide_point(*touch.pos) and touch.y < (self.top - TOP_KEEPOUT) and touch.y > self.y + BOTTOM_KEEPOUT:
+            touch.ud['line'].points += [touch.x, touch.y]
+            return True
         return super(PaintWidget, self).on_touch_move(touch)
 
 class PaintTab(TabbedPanelItem):
+    live_event = None
+
     def __init__(self, **kwargs):
         super(PaintTab, self).__init__(**kwargs)
         self.text = 'Paint'
         box = BoxLayout(orientation='vertical')
-        btn_box = BoxLayout(orientation='horizontal')
+        btn_box = BoxLayout(orientation='horizontal', size_hint_y=None, height=80)
         self.paint_widget = PaintWidget()
+        self.paint_widget.bind(width=self._update_height)
         color_picker = ColorPicker()
         color_picker.bind(color=self.on_color)
         color_picker_popup = Popup(title='Color Picker', content=color_picker, size_hint=(0.8, 0.8))
@@ -75,12 +85,18 @@ class PaintTab(TabbedPanelItem):
         clear_button.bind(on_press=self.clear_canvas)
         save_button = Button(text='Save')
         save_button.bind(on_press=self.save_canvas)
+        live_button = ToggleButton(text='Live')
+        live_button.bind(on_press=self.live_canvas)
         box.add_widget(self.paint_widget)
         btn_box.add_widget(color_button)
         btn_box.add_widget(clear_button)
         btn_box.add_widget(save_button)
+        btn_box.add_widget(live_button)
         box.add_widget(btn_box)
         self.add_widget(box)
+
+    def _update_height(self, instance, value):
+        self.paint_widget.height = value * ASPECT_RATIO
 
     def on_color(self, instance, value):
         self.paint_widget.line_color = value
@@ -92,6 +108,16 @@ class PaintTab(TabbedPanelItem):
         self.paint_widget.export_to_png('drawing.png')
         Matrix.load_image('drawing.png')
         Matrix.send_pixels()
+
+    def live_canvas(self, instance):
+        if instance.state == 'down':
+            # Call self.save_canvas every 0.1 seconds
+            self.live_event = Clock.schedule_interval(self.save_canvas, 0.2)
+        else:
+            # Stop calling self.save_canvas
+            self.live_event.cancel()
+            
+
 
 # Define the field button
 class PixelButton(ToggleButton):
@@ -167,19 +193,24 @@ class TextTab(TabbedPanelItem):
         super(TextTab, self).__init__(**kwargs)
         self.text = 'Text'
         text_box = BoxLayout(orientation='vertical')
-        text_box.padding = 20
-        text_box.spacing = 20
-        text_line_1 = TextInput(text='Enter your text here', multiline=False, size_hint_y=None, height=100)
-        text_line_1.font_size = 48
-        text_box.add_widget(text_line_1)
-        text_line_2 = TextInput(text='Enter your text here', multiline=False, size_hint_y=None, height=100)
-        text_line_2.font_size = 48
-        text_box.add_widget(text_line_2)
-        btn = Button(text="Send", size_hint_y=None, height=100)
-        text_box.add_widget(btn)
+        text_box.padding = 10
+        text_box.spacing = 10
         spacer = Label(text='')
         text_box.add_widget(spacer)
+        self.text_line_1 = TextInput(text='Hello', multiline=False, size_hint_y=None, height=80)
+        self.text_line_1.font_size = 36
+        text_box.add_widget(self.text_line_1)
+        self.text_line_2 = TextInput(text='World', multiline=False, size_hint_y=None, height=80)
+        self.text_line_2.font_size = 36
+        text_box.add_widget(self.text_line_2)
+        btn = Button(text="Send", size_hint_y=None, height=80)
+        btn.bind(on_press=self.send_text)
+        text_box.add_widget(btn)
         self.add_widget(text_box)
+
+    def send_text(self, instance):
+        text = self.text_line_1.text + ' ' + self.text_line_2.text
+        print(text)
 
 
 class HomeTab(TabbedPanelItem):
@@ -187,7 +218,7 @@ class HomeTab(TabbedPanelItem):
         super(HomeTab, self).__init__(**kwargs)
         self.text = 'Home'
         home_box = BoxLayout(orientation='vertical')
-        connection_box = BoxLayout(orientation='horizontal', size_hint_y=None, height=70, spacing=20)
+        connection_box = BoxLayout(orientation='horizontal', size_hint_y=None, height=70, spacing=10, padding=10)
 
         # Add connection setup UI
         connection_label = Label(text='Connection', font_size=48, size_hint_y=None, height=80)
@@ -232,7 +263,7 @@ class FrackMatrixApp(App):
 
         # Create a tabbed panel
         tab_panel = TabbedPanel()
-        tab_panel.tab_height = 200
+        tab_panel.tab_height = TOP_KEEPOUT
 
         # Add a new tab named "Home"
         home_tab = HomeTab()

@@ -22,12 +22,13 @@ from matrix_protocol import MatrixProtocol
 
 WIDTH=16
 HEIGHT=16
+ASPECT_RATIO=WIDTH/HEIGHT
 # Set the window size
 Window.size = (800, 480)
 Window.virtual_keyboard_mode = 'dock'
 Config.set('kivy', 'keyboard_mode', 'dock')
 
-Matrix = MatrixProtocol()
+Matrix = MatrixProtocol(width=WIDTH, height=HEIGHT)
 serial_ports = Matrix.scan_serial_ports()
 
 class PaintWidget(Widget):
@@ -36,11 +37,11 @@ class PaintWidget(Widget):
     def __init__(self, **kwargs):
         super(PaintWidget, self).__init__(**kwargs)
         self.size_hint_y = None
-        self.height = self.width * 2 / 5
+        self.height = self.width * ASPECT_RATIO
         self.bind(width=self._update_height)
 
     def _update_height(self, instance, value):
-        self.height = value * 2 / 5
+        self.height = value * ASPECT_RATIO
 
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
@@ -89,6 +90,8 @@ class PaintTab(TabbedPanelItem):
 
     def save_canvas(self, instance):
         self.paint_widget.export_to_png('drawing.png')
+        Matrix.load_image('drawing.png')
+        Matrix.send_pixels()
 
 # Define the field button
 class PixelButton(ToggleButton):
@@ -107,11 +110,11 @@ class PixelButton(ToggleButton):
         if value == 'down':  # button is pressed
             self.background_color = (1, 1, 1, 1)  # white color
             print(self.led, "on")
-            Matrix.set_pixel(x, y, (255, 255, 255))
+            Matrix.set_pixel_cmd(x, y, 100, 100, 100)
         else:
             self.background_color = (0, 0, 0, 1)  # black color
             print(self.led, "off")
-            Matrix.set_pixel(x, y, (0, 0, 0))
+            Matrix.set_pixel_cmd(x, y, 0, 0, 0)
 
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos) and touch.button == 'left':
@@ -126,6 +129,7 @@ class PixelButton(ToggleButton):
     def on_touch_move(self, touch):
         if self.collide_point(*touch.pos) and touch.button == 'left':
             self.state = 'down'   # simulate a click
+            print("move", self.led)
         return super(PixelButton, self).on_touch_move(touch)
     
 

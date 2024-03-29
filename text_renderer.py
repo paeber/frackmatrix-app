@@ -26,6 +26,7 @@ class TextRenderer:
 
 
     def add_text(self, text, line=0, slot=0, foreground=(255, 255, 255), background=(0, 0, 0)):
+        text = text.upper()
         y = (line) * (self.slot_height)
         x = (slot) * (self.slot_width)
         for char in text:
@@ -39,6 +40,7 @@ class TextRenderer:
 
 
     def render_buffer(self, text, foreground=(255, 255, 255), background=(0, 0, 0)):
+        text = text.upper()
         # init a 2D pixel buffer
         width = len(text) * (self.slot_width)
         height = self.slot_height

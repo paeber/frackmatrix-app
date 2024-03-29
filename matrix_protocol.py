@@ -6,9 +6,6 @@ from PIL import Image
 from text_renderer import TextRenderer
 
 class MatrixProtocol:
-    width = 16
-    height = 16
-    pixels = []
 
     def __init__(self, port='/dev/ttyUSB0', baudrate=115200, width=16, height=16):
         self.port = port
@@ -27,17 +24,18 @@ class MatrixProtocol:
 
     def connect(self):
         if self.ser is not None:
-            return -1
-
+            return False
         print("Connect to port: " + self.port)
         self.ser = serial.Serial(self.port, self.baudrate, timeout=1)
-        #self.ser.open()
+        if self.ser.isOpen():
+            return True
 
     def disconnect(self):
         if self.ser is None:
-            return -1
+            return False
         print("Disconnect from port: " + self.port)
         self.ser.close()
+        return True
 
     def reset_matrix(self):
         if self.ser is None:
@@ -95,9 +93,6 @@ class MatrixProtocol:
                 else:
                     send_buf[y][x] = self.pixels[y][x]
                         
-        #if self.mirror:
-        #    np.fliplr(send_buf)
-
         if snake:
             for idx in range(self.width * self.height):
                 x, y = self.snake_to_xy(idx, self.width)
@@ -114,13 +109,9 @@ class MatrixProtocol:
     
 
     def load_image(self, image_path):
-        # Open the image file
         img = Image.open(image_path)
-        # Resize the image
         img = img.resize((self.width, self.height))
-        # Load the pixel data
         pixels = img.load()
-        # Apply the colors to the pixels buffer
         for y in range(self.height):
             for x in range(self.width):
                 print(x, y, pixels[x, y])
@@ -152,18 +143,26 @@ if __name__ == "__main__":
         while run:
 
             Matrix.textRenderer.clear()
-            Matrix.textRenderer.add_text("E ")
+            Matrix.textRenderer.add_text("HOI")
             buf = Matrix.textRenderer.get_buffer()
             Matrix.pixels = buf
-            Matrix.send_pixels(snake=True)
+            Matrix.send_pixels()
             time.sleep(.1)
 
             Matrix.textRenderer.clear()
-            Matrix.textRenderer.add_text(" T")
+            Matrix.textRenderer.add_text("HOI", line=1)
             buf = Matrix.textRenderer.get_buffer()
             Matrix.pixels = buf
-            Matrix.send_pixels(snake=True)
+            Matrix.send_pixels()
             time.sleep(.1)
+
+            Matrix.textRenderer.clear()
+            Matrix.textRenderer.add_text("E", line=0)
+            Matrix.textRenderer.add_text(" T", line=1)
+            buf = Matrix.textRenderer.get_buffer()
+            Matrix.pixels = buf
+            Matrix.send_pixels()
+            time.sleep(1)
 
 
     except Exception as e:

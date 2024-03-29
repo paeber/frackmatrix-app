@@ -18,6 +18,7 @@ from kivy.graphics import Color, Line, Rectangle
 from kivy.core.window import Window
 from kivy.config import Config
 from kivy.clock import Clock
+from kivy.uix.vkeyboard import VKeyboard
 
 from matrix_protocol import MatrixProtocol
 
@@ -29,8 +30,8 @@ BOTTOM_KEEPOUT=0
 
 # Set the window size
 Window.size = (800, 480)
-Window.virtual_keyboard_mode = 'dock'
-Config.set('kivy', 'keyboard_mode', 'dock')
+Window.virtual_keyboard_mode = 'systemanddock'
+Config.set('kivy', 'keyboard_mode', 'systemanddock')
 
 Matrix = MatrixProtocol(width=WIDTH, height=HEIGHT)
 serial_ports = Matrix.scan_serial_ports()
@@ -192,25 +193,81 @@ class TextTab(TabbedPanelItem):
     def __init__(self, **kwargs):
         super(TextTab, self).__init__(**kwargs)
         self.text = 'Text'
-        text_box = BoxLayout(orientation='vertical')
-        text_box.padding = 10
-        text_box.spacing = 10
-        spacer = Label(text='')
-        text_box.add_widget(spacer)
-        self.text_line_1 = TextInput(text='Hello', multiline=False, size_hint_y=None, height=80)
+        self.text_box = BoxLayout(orientation='vertical')
+        self.text_box.padding = 10
+        self.text_box.spacing = 10
+        self.text_line_1 = TextInput(text='Hello', multiline=False, size_hint_y=None, height=52)
         self.text_line_1.font_size = 36
-        text_box.add_widget(self.text_line_1)
-        self.text_line_2 = TextInput(text='World', multiline=False, size_hint_y=None, height=80)
+        self.text_line_1.bind(on_touch_down=self.ontouch)
+        self.text_box.add_widget(self.text_line_1)
+        self.text_line_2 = TextInput(text='World', multiline=False, size_hint_y=None, height=52)
         self.text_line_2.font_size = 36
-        text_box.add_widget(self.text_line_2)
-        btn = Button(text="Send", size_hint_y=None, height=80)
-        btn.bind(on_press=self.send_text)
-        text_box.add_widget(btn)
-        self.add_widget(text_box)
+        self.text_line_2.bind(on_touch_down=self.ontouch)
+        self.text_box.add_widget(self.text_line_2)
+        #btn = Button(text="Send", size_hint_y=None, height=80)
+        #btn.bind(on_press=self.send_text)
+        #self.text_box.add_widget(btn)
+
+        self.kb = VKeyboard(
+            on_key_up=self.vkbinput,
+            pos_hint={'center_x': .5},
+            #size_hint=(.8, None)
+        )
+        self.text_box.add_widget(self.kb)
+
+        self.add_widget(self.text_box)
+        self.textbox_number = 1
+        self.show_keyboard = True
+
+    def ontouch(self, instance, value):
+        if instance == self.text_line_1:
+            self.textbox_number = 1
+        elif instance == self.text_line_2:
+            self.textbox_number = 2
+
+        if self.show_keyboard:
+            return
+        self.show_keyboard = True
+
+        self.kb = VKeyboard(
+            on_key_up=self.vkbinput,
+            pos_hint={'center_x': .5},
+            size_hint=(None, None)
+        )
+        self.text_box.add_widget(self.kb)
 
     def send_text(self, instance):
-        text = self.text_line_1.text + ' ' + self.text_line_2.text
-        print(text)
+        Matrix.textRenderer.clear()
+        Matrix.textRenderer.add_text(self.text_line_1.text, line=0)
+        Matrix.textRenderer.add_text(self.text_line_2.text, line=1)
+        Matrix.pixels = Matrix.textRenderer.get_buffer()
+        Matrix.send_pixels()
+
+    def vkbinput(self, keyboard, keycode, *args):
+        if self.textbox_number == 1:
+            text = self.text_line_1.text
+        elif self.textbox_number == 2:
+            text = self.text_line_2.text
+
+        if keycode == 'backspace':
+            text = text[:-1]
+        elif keycode == 'spacebar':
+            text = f'{text} '
+        elif keycode == 'enter':
+            self.send_text(None)
+        elif keycode == 'escape' and False:
+            self.text_box.remove_widget(self.kb)
+            self.show_keyboard = False
+            return
+        else:
+            text = f'{text}{keycode.upper()}'
+
+        if self.textbox_number == 1:
+            self.text_line_1.text = text
+        elif self.textbox_number == 2:
+            self.text_line_2.text = text
+
+        print("Key:", keycode)
 
 
 class HomeTab(TabbedPanelItem):
@@ -257,6 +314,11 @@ class HomeTab(TabbedPanelItem):
 
 # Define the application class
 class FrackMatrixApp(App):
+
+    def __init__(self, **kwargs):
+        super(FrackMatrixApp, self).__init__(**kwargs)
+        
+
     def build(self):
 
         screen = BoxLayout(orientation='vertical')

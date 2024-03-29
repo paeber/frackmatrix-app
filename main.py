@@ -25,7 +25,7 @@ from matrix_protocol import MatrixProtocol
 WIDTH=16
 HEIGHT=16
 ASPECT_RATIO=WIDTH/HEIGHT
-TOP_KEEPOUT=120
+TOP_KEEPOUT=80
 BOTTOM_KEEPOUT=0
 
 # Set the window size
@@ -35,6 +35,9 @@ Config.set('kivy', 'keyboard_mode', 'systemanddock')
 
 Matrix = MatrixProtocol(width=WIDTH, height=HEIGHT)
 serial_ports = Matrix.scan_serial_ports()
+if len(serial_ports) == 0:
+    print("No serial ports found")
+    serial_ports = ["/dev/tty/Nönö"]
 
 class PaintWidget(Widget):
     line_color = ListProperty([1, 1, 1])

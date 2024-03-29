@@ -1,7 +1,9 @@
 
 import serial
 import serial.tools.list_ports
+import numpy as np
 from PIL import Image
+from text_renderer import TextRenderer
 
 class MatrixProtocol:
     width = 16
@@ -15,6 +17,9 @@ class MatrixProtocol:
         self.width = width
         self.height = height
         self.pixels = [[(0, 0, 0) for x in range(self.width)] for y in range(self.height)]
+        self.textRenderer = TextRenderer(width, height)
+        self.snake = True
+        self.mirror = True
 
     def scan_serial_ports(self):
         ports = serial.tools.list_ports.comports()
@@ -49,6 +54,13 @@ class MatrixProtocol:
         else:
             return y * width + (width - x - 1)
         
+    def snake_to_xy(self, index, width):
+        y = index // width
+        x = index % width
+        if y % 2 != 0:
+            x = width - x - 1
+        return x, y
+        
     def clear_pixels_buffer(self):
         for y in range(self.height):
             for x in range(self.width):
@@ -68,15 +80,34 @@ class MatrixProtocol:
         index = self.xy_to_snake(x, y, self.width)
         self.pixels[index // self.width][index % self.width] = (r, g, b)
 
-    def send_pixels(self):
+    def send_pixels(self, snake=True):
         if self.ser is None:
             print("Serial port not connected")
             return False
         data = bytes([2])
+
+        #convert self.pixels to numpy array
+        send_buf = np.zeros((self.height, self.width, 3), dtype=np.uint8)
         for y in range(self.height):
             for x in range(self.width):
-                r, g, b = self.pixels[y][x]
+                if self.mirror:
+                    send_buf[y][x] = self.pixels[y][self.width - (x + 1)]
+                else:
+                    send_buf[y][x] = self.pixels[y][x]
+                        
+        #if self.mirror:
+        #    np.fliplr(send_buf)
+
+        if snake:
+            for idx in range(self.width * self.height):
+                x, y = self.snake_to_xy(idx, self.width)
+                r, g, b = send_buf[y][x]
                 data += bytes([r, g, b])
+        else: 
+            for y in range(self.height):
+                for x in range(self.width):
+                    r, g, b = send_buf[y][x]
+                    data += bytes([r, g, b])
         self.ser.write(data)
         ret = self.ser.read(1)
         return (ret == b'\x10')
@@ -97,6 +128,8 @@ class MatrixProtocol:
                 self.set_pixel_buffer(x, y, r, g, b)
 
 
+
+
 if __name__ == "__main__":
     import time
 
@@ -113,10 +146,24 @@ if __name__ == "__main__":
         Matrix.port = ports[0]
         Matrix.connect()
         
+        Matrix.set_pixel_cmd(10, 10, 255, 0, 0)
+        time.sleep(2)
+
         while run:
-            Matrix.set_pixel_buffer(10, 3, 0, 255, 0)
-            Matrix.send_pixels()
-            time.sleep(1)
+
+            Matrix.textRenderer.clear()
+            Matrix.textRenderer.add_text("E ")
+            buf = Matrix.textRenderer.get_buffer()
+            Matrix.pixels = buf
+            Matrix.send_pixels(snake=True)
+            time.sleep(.1)
+
+            Matrix.textRenderer.clear()
+            Matrix.textRenderer.add_text(" T")
+            buf = Matrix.textRenderer.get_buffer()
+            Matrix.pixels = buf
+            Matrix.send_pixels(snake=True)
+            time.sleep(.1)
 
 
     except Exception as e:

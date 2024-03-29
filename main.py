@@ -56,7 +56,7 @@ class PaintWidget(Widget):
         if self.collide_point(*touch.pos) and touch.y < (self.top - TOP_KEEPOUT) and touch.y > self.y + BOTTOM_KEEPOUT:
             with self.canvas:
                 Color(*self.line_color)
-                touch.ud['line'] = Line(points=(touch.x, touch.y), width=16)
+                touch.ud['line'] = Line(points=(touch.x, touch.y), width=10)
             return True
         return super(PaintWidget, self).on_touch_down(touch)
 

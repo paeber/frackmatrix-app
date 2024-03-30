@@ -442,4 +442,4 @@ if __name__ == '__main__':
 if restart:
     import os
     print("Restarting...")
-    os.execv("run.sh")
+    os.execv("run.sh", sys.argv)

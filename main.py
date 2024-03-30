@@ -20,6 +20,7 @@ from kivy.config import Config
 from kivy.clock import Clock
 from kivy.uix.vkeyboard import VKeyboard
 
+import sys
 from matrix_protocol import MatrixProtocol
 
 WIDTH=16
@@ -27,6 +28,8 @@ HEIGHT=16
 ASPECT_RATIO=WIDTH/HEIGHT
 TOP_KEEPOUT=80
 BOTTOM_KEEPOUT=0
+
+restart = False
 
 # Set the window size
 Window.size = (800, 480)
@@ -360,6 +363,10 @@ class HomeTab(TabbedPanelItem):
         home_box.add_widget(Label(text=''))
 
         home_box.add_widget(quick_actions_box)
+
+        restart_button = Button(text='Restart', size_hint_y=None, height=70, on_press=self.restart)
+        home_box.add_widget(restart_button)
+
         self.add_widget(home_box)
 
     def connect(self, instance):
@@ -380,6 +387,11 @@ class HomeTab(TabbedPanelItem):
 
     def reset_matrix(self, instance):
         Matrix.reset()
+
+    def restart(self, instance):
+        global restart
+        restart = True
+        App.get_running_app().stop()
 
 
 # Define the application class
@@ -425,3 +437,9 @@ class FrackMatrixApp(App):
 # Run the application
 if __name__ == '__main__':
     FrackMatrixApp().run()
+
+
+if restart:
+    import os
+    print("Restarting...")
+    os.execv(__file__, sys.argv)

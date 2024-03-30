@@ -22,6 +22,7 @@ from kivy.uix.vkeyboard import VKeyboard
 
 import sys
 from matrix_protocol import MatrixProtocol
+from ui.image_tab import ImageTab
 
 VERSION = 0.1
 
@@ -35,8 +36,6 @@ restart = False
 
 # Set the window size
 Window.size = (800, 480)
-Window.virtual_keyboard_mode = 'systemanddock'
-Config.set('kivy', 'keyboard_mode', 'systemanddock')
 
 Matrix = MatrixProtocol(width=WIDTH, height=HEIGHT)
 serial_ports = Matrix.scan_serial_ports()
@@ -497,6 +496,9 @@ class FrackMatrixApp(App):
         draw_tab = DrawTab()
         tab_panel.add_widget(draw_tab)
 
+        # Add a new tab named "Image"
+        image_tab = ImageTab()
+        tab_panel.add_widget(image_tab)
 
         # Add a new tab named "Paint"
         paint_tab = PaintTab()

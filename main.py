@@ -41,6 +41,7 @@ restart = False
 
 # Set the window size
 Window.size = (800, 480)
+Window.show_cursor = False
 
 Matrix = MatrixProtocol(width=WIDTH, height=HEIGHT)
 serial_ports = Matrix.scan_serial_ports()

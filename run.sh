@@ -27,6 +27,14 @@ REMOTE=$(git rev-parse @{u})
 
 if [ $LOCAL != $REMOTE ]; then
     echo "There are changes available to pull."
+
+    # Show the commit message from the available pull
+    echo "Commit message from the available pull:"
+    git log --oneline $LOCAL..$REMOTE
+
+    sleep 5
+
+    # Pull the changes
     git pull origin $branch
 
     # Restart the script

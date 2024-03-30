@@ -85,8 +85,8 @@ if __name__ == "__main__":
 
     textRenderer = TextRenderer(16, 16)
 
-    textRenderer.set_text("17", line=0, slot=0)
-    textRenderer.set_text("EBER", line=1, slot=0)
+    textRenderer.add_text("17", line=0, slot=0)
+    textRenderer.add_text("EBER", line=1, slot=0)
 
     # pretty print with # and . for black and white pixels
     for row in textRenderer.pixels:

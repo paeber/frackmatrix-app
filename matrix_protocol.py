@@ -114,7 +114,6 @@ class MatrixProtocol:
         pixels = img.load()
         for y in range(self.height):
             for x in range(self.width):
-                print(x, y, pixels[x, y])
                 r, g, b, a= pixels[x, y]
                 self.set_pixel_buffer(x, y, r, g, b)
 
@@ -135,7 +134,9 @@ if __name__ == "__main__":
             exit()
 
         Matrix.port = ports[0]
-        Matrix.connect()
+        if not Matrix.connect():
+            print("Failed to connect to port")
+            exit()
         
         Matrix.set_pixel_cmd(10, 10, 255, 0, 0)
         time.sleep(2)
@@ -164,6 +165,10 @@ if __name__ == "__main__":
             Matrix.send_pixels()
             time.sleep(1)
 
+            Matrix.clear_pixels_buffer()
+            Matrix.send_pixels()
+            time.sleep(1)
+
 
     except Exception as e:
         print(e)
@@ -173,6 +178,6 @@ if __name__ == "__main__":
         run = False
 
     finally:
-        Matrix.ser.close()
+        if Matrix.ser is not None:
+            Matrix.ser.close()
 
-    print("done")

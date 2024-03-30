@@ -44,31 +44,50 @@ class PaintWidget(Widget):
     
     def __init__(self, **kwargs):
         super(PaintWidget, self).__init__(**kwargs)
+        self.pos_hint = {'center_x': 0.5, 'center_y': 0.5}
+        self.size_hint = (None, None)
+        self.height = 300
+        self.width = self.height * ASPECT_RATIO
 
-        if ASPECT_RATIO > 1:
-            self.size_hint_x = None
-            self.width = self.height * ASPECT_RATIO
-        else:
-            self.size_hint_y = None
-            self.height = self.width * ASPECT_RATIO
-        self.bind(width=self._update_height)
+        if self.width > Window.width:
+            self.width = Window.width - 20
+            self.height = self.width / ASPECT_RATIO
 
-    def _update_height(self, instance, value):
-        self.height = value * ASPECT_RATIO
+        # Get the size of the window
+        window_width, window_height = Window.size
+        self.x = (window_width - self.width) / 2
+        self.y = (window_height - self.height) / 2 - 60
+        self.corners = (self.x, self.y, self.x + self.width, self.y + self.height)       
+        self.clear()
+
+        
+    def clear(self):
+        self.canvas.clear()
+        with self.canvas:
+            Color(0, 0, 0)
+            Rectangle(pos=(self.x, self.y), size=(self.width, self.height))
 
     def on_touch_down(self, touch):
-        if self.collide_point(*touch.pos) and touch.y < (self.top - TOP_KEEPOUT) and touch.y > self.y + BOTTOM_KEEPOUT:
-            with self.canvas:
-                Color(*self.line_color)
-                touch.ud['line'] = Line(points=(touch.x, touch.y), width=10)
-            return True
-        return super(PaintWidget, self).on_touch_down(touch)
+        try:
+            if (self.corners[0] < touch.x < self.corners[2] and self.corners[1] < touch.y < self.corners[3]):
+                with self.canvas:
+                    Color(*self.line_color)
+                    touch.ud['line'] = Line(points=(touch.x, touch.y), width=10)
+                return True
+        except Exception as e:
+            print(e)
+        finally:
+            return super(PaintWidget, self).on_touch_down(touch)
 
     def on_touch_move(self, touch):
-        if self.collide_point(*touch.pos) and touch.y < (self.top - TOP_KEEPOUT) and touch.y > self.y + BOTTOM_KEEPOUT:
-            touch.ud['line'].points += [touch.x, touch.y]
-            return True
-        return super(PaintWidget, self).on_touch_move(touch)
+        try:
+            if (self.corners[0] < touch.x < self.corners[2] and self.corners[1] < touch.y < self.corners[3]):
+                touch.ud['line'].points += [touch.x, touch.y]
+                return True
+        except Exception as e:
+            print(e)   
+        finally:
+            return super(PaintWidget, self).on_touch_move(touch)
 
 class PaintTab(TabbedPanelItem):
     live_event = None
@@ -79,7 +98,6 @@ class PaintTab(TabbedPanelItem):
         box = BoxLayout(orientation='vertical')
         btn_box = BoxLayout(orientation='horizontal', size_hint_y=None, height=80)
         self.paint_widget = PaintWidget()
-        self.paint_widget.bind(width=self._update_height)
         color_picker = ColorPicker()
         color_picker.bind(color=self.on_color)
         color_picker_popup = Popup(title='Color Picker', content=color_picker, size_hint=(0.8, 0.8))
@@ -99,14 +117,12 @@ class PaintTab(TabbedPanelItem):
         box.add_widget(btn_box)
         self.add_widget(box)
 
-    def _update_height(self, instance, value):
-        self.paint_widget.height = value * ASPECT_RATIO
-
     def on_color(self, instance, value):
         self.paint_widget.line_color = value
 
     def clear_canvas(self, instance):
-        self.paint_widget.canvas.clear()
+        #self.paint_widget.canvas.clear()
+        self.paint_widget.clear()
 
     def save_canvas(self, instance):
         self.paint_widget.export_to_png('drawing.png')
@@ -164,13 +180,14 @@ class PixelButton(ToggleButton):
     
 
 class DrawTab(TabbedPanelItem):
-    color = (1, 0, 0, 1)  # red color
+    pixel_color = ListProperty([1, 1, 1])
 
     def __init__(self, **kwargs):
         super(DrawTab, self).__init__(**kwargs)
         self.text = 'Draw'
         draw_box = BoxLayout(orientation='vertical')
         draw_grid = GridLayout(cols=WIDTH, rows=HEIGHT, size_hint=(1, 1))
+        btn_box = BoxLayout(orientation='horizontal', size_hint_y=None, height=80)
         self.pixel_buttons = []
         for i in range(WIDTH * HEIGHT):
             pixel_button = PixelButton()
@@ -179,9 +196,14 @@ class DrawTab(TabbedPanelItem):
             draw_grid.add_widget(pixel_button)
         draw_box.add_widget(draw_grid)
         
-        reset_button = Button(text='Reset', size_hint_y=None, height=50)
-        reset_button.bind(on_press=self.reset_pixel_buttons)
-        draw_box.add_widget(reset_button)
+        color_picker = ColorPicker()
+        color_picker.bind(color=self.on_color)
+        color_picker_popup = Popup(title='Color Picker', content=color_picker, size_hint=(0.8, 0.8))
+        color_button = Button(text='Pick Color', on_press=color_picker_popup.open)
+        reset_button = Button(text='Reset', on_press=self.reset_pixel_buttons)
+        btn_box.add_widget(color_button)
+        btn_box.add_widget(reset_button)
+        draw_box.add_widget(btn_box)
 
         self.add_widget(draw_box)
 
@@ -189,6 +211,11 @@ class DrawTab(TabbedPanelItem):
         for pixel_button in self.pixel_buttons:
             pixel_button.state = 'normal'  # set button state to up
 
+    def on_color(self, instance, value):
+        self.pixel_color = value
+        for pixel_button in self.pixel_buttons:
+            if pixel_button.state == 'down':
+                pixel_button.background_color = self.pixel_color
     
 
 
@@ -196,15 +223,15 @@ class TextTab(TabbedPanelItem):
     def __init__(self, **kwargs):
         super(TextTab, self).__init__(**kwargs)
         self.text = 'Text'
-        self.text_box = BoxLayout(orientation='vertical')
+        self.text_box = GridLayout(cols=1)
         self.text_box.padding = 10
         self.text_box.spacing = 10
-        self.text_line_1 = TextInput(text='Hello', multiline=False, size_hint_y=None, height=52)
-        self.text_line_1.font_size = 36
+        self.text_line_1 = TextInput(text='HELLO', multiline=False, size_hint_y=None, height=52)
+        self.text_line_1.font_size = 32
         self.text_line_1.bind(on_touch_down=self.ontouch)
         self.text_box.add_widget(self.text_line_1)
-        self.text_line_2 = TextInput(text='World', multiline=False, size_hint_y=None, height=52)
-        self.text_line_2.font_size = 36
+        self.text_line_2 = TextInput(text='WORLD', multiline=False, size_hint_y=None, height=52)
+        self.text_line_2.font_size = 32
         self.text_line_2.bind(on_touch_down=self.ontouch)
         self.text_box.add_widget(self.text_line_2)
         #btn = Button(text="Send", size_hint_y=None, height=80)
@@ -214,6 +241,10 @@ class TextTab(TabbedPanelItem):
         self.kb = VKeyboard(
             on_key_up=self.vkbinput,
             pos_hint={'center_x': .5},
+            layout='qwertz',
+            width=780,
+            height=250,
+            do_translation=False,
             #size_hint=(.8, None)
         )
         self.text_box.add_widget(self.kb)
@@ -258,10 +289,16 @@ class TextTab(TabbedPanelItem):
             text = f'{text} '
         elif keycode == 'enter':
             self.send_text(None)
-        elif keycode == 'escape' and False:
-            self.text_box.remove_widget(self.kb)
-            self.show_keyboard = False
-            return
+        elif keycode == 'shift':
+            pass
+        elif keycode == 'tab':
+            pass
+        elif keycode == 'capslock':
+            pass
+        elif keycode == 'escape':
+            text = ''
+        elif keycode == 'layout':
+            pass
         else:
             text = f'{text}{keycode.upper()}'
 

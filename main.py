@@ -23,6 +23,8 @@ from kivy.uix.vkeyboard import VKeyboard
 import sys
 from matrix_protocol import MatrixProtocol
 
+VERSION = 0.1
+
 WIDTH=16
 HEIGHT=16
 ASPECT_RATIO=WIDTH/HEIGHT
@@ -325,6 +327,42 @@ class TextTab(TabbedPanelItem):
         print("Key:", keycode)
 
 
+class DebugTab(TabbedPanelItem):
+    def __init__(self, **kwargs):
+        super(DebugTab, self).__init__(**kwargs)
+        self.text = 'Debug'
+        self.layout = GridLayout(cols=1)
+        self.layout.padding = 10
+        self.layout.spacing = 10
+        
+        restart_button = Button(text='Restart', size_hint_y=None, height=70, on_press=self.restart)
+        restart_button.background_color = (0, 1, 0, 1)
+        self.layout.add_widget(restart_button)
+        stop_button = Button(text='Stop', size_hint_y=None, height=70, on_press=self.stop)
+        stop_button.background_color = (1, 0, 0, 1)
+        self.layout.add_widget(stop_button)
+
+        self.layout.add_widget(Label(text='', size_hint_y=1))
+
+        about_label = Label(text='Frack Matrix v{0}'.format(VERSION), font_size=24, size_hint_y=None, height=30)
+        self.layout.add_widget(about_label)
+        company_label = Label(text='EberWare GmBH', font_size=16, size_hint_y=None, height=20)
+        self.layout.add_widget(company_label)
+        author_label = Label(text='by Pascal Eberhard', font_size=16, size_hint_y=None, height=20)
+        self.layout.add_widget(author_label)
+        
+
+        self.add_widget(self.layout)
+
+    def restart(self, instance):
+        global restart
+        restart = True
+        App.get_running_app().stop()
+
+    def stop(self, instance):
+        App.get_running_app().stop()
+
+
 class HomeTab(TabbedPanelItem):
     def __init__(self, **kwargs):
         super(HomeTab, self).__init__(**kwargs)
@@ -350,6 +388,7 @@ class HomeTab(TabbedPanelItem):
 
         self.connect_button = Button(text='Connect', size_hint_x=0.3)
         self.connect_button.bind(on_release=self.connect)
+        self.connect_button.background_color = (0, 1, 0, 1)
         connection_box.add_widget(self.connect_button)
 
         home_box.add_widget(connection_box)
@@ -364,9 +403,6 @@ class HomeTab(TabbedPanelItem):
 
         home_box.add_widget(quick_actions_box)
 
-        restart_button = Button(text='Restart', size_hint_y=None, height=70, on_press=self.restart)
-        home_box.add_widget(restart_button)
-
         self.add_widget(home_box)
 
     def connect(self, instance):
@@ -374,10 +410,14 @@ class HomeTab(TabbedPanelItem):
         Matrix.baudrate = int(self.baud_rate_spinner.text)
         Matrix.connect()
         self.connect_button.text = 'Disconnect'
+        self.connect_button.bind(on_release=self.disconnect)
+        self.connect_button.background_color = (1, 0, 0, 1)
 
     def disconnect(self, instance):
         Matrix.disconnect()
         self.connect_button.text = 'Connect'
+        self.connect_button.bind(on_release=self.connect)
+        self.connect_button.background_color = (0, 1, 0, 1)
 
     def scan(self, instance):
         self.serial_ports = Matrix.scan_serial_ports()
@@ -388,10 +428,6 @@ class HomeTab(TabbedPanelItem):
     def reset_matrix(self, instance):
         Matrix.reset()
 
-    def restart(self, instance):
-        global restart
-        restart = True
-        App.get_running_app().stop()
 
 
 # Define the application class
@@ -425,6 +461,10 @@ class FrackMatrixApp(App):
         # Add a new tab named "Paint"
         paint_tab = PaintTab()
         tab_panel.add_widget(paint_tab)
+
+        # Add a new tab named "Debug"
+        debug_tab = DebugTab()
+        tab_panel.add_widget(debug_tab)
 
         tab_panel.default_tab = home_tab
         screen.add_widget(tab_panel)

@@ -37,11 +37,11 @@ class MatrixProtocol:
         self.ser.close()
         return True
 
-    def reset_matrix(self):
+    def reset(self):
         if self.ser is None:
             print("Serial port not connected")
             return False
-        data = bytes([2])
+        data = bytes([1])
         self.ser.write(data)
         ret = self.ser.read(1)
         return (ret == b'\x10')
@@ -74,9 +74,12 @@ class MatrixProtocol:
         ret = self.ser.read(1)
         return (ret == b'\x10')
     
-    def set_pixel_buffer(self, x, y, r, g, b):
-        index = self.xy_to_snake(x, y, self.width)
-        self.pixels[index // self.width][index % self.width] = (r, g, b)
+    def set_pixel_buffer(self, x, y, r, g, b, snake=False):
+        if snake:
+            index = self.xy_to_snake(x, y, self.width)
+            self.pixels[index // self.width][index % self.width] = (r, g, b)
+        else:
+            self.pixels[y][x] = (r, g, b)
 
     def send_pixels(self, snake=True):
         if self.ser is None:

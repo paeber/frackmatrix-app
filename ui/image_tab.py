@@ -25,8 +25,8 @@ class ImageTab(TabbedPanelItem):
 
     def load_image(self, instance):
         # open file dialog to select image
-        from kivy.uix.filechooser import FileChooserListView
-        file_chooser = FileChooserListView()
+        from kivy.uix.filechooser import FileChooserIconView
+        file_chooser = FileChooserIconView()
         file_chooser.path = "/home/pi/Pictures"
         file_chooser.bind(on_submit=self.load_image_file)
         file_chooser.bind(on_cancel=self.cancel_image_file)

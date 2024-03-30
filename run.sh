@@ -31,7 +31,7 @@ if [ $LOCAL != $REMOTE ]; then
 
     # Restart the script
     echo "Restarting the script..."
-    exec $0
+    sh $0
 
 else
     echo "No changes available to pull."

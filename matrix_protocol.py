@@ -1,4 +1,4 @@
-
+import time
 import serial
 import serial.tools.list_ports
 import numpy as np
@@ -117,9 +117,35 @@ class MatrixProtocol:
         pixels = img.load()
         for y in range(self.height):
             for x in range(self.width):
-                r, g, b, a= pixels[x, y]
+                if len(pixels[x, y]) == 3:
+                    r, g, b = pixels[x, y]
+                elif len(pixels[x, y]) == 4:
+                    r, g, b, a= pixels[x, y]
                 self.set_pixel_buffer(x, y, r, g, b)
 
+    def scroll_text(self, text, line=0, foreground=(255, 255, 255), background=(0, 0, 0), blank=True):
+        if blank:
+            quotient, remainder = divmod(self.width, self.textRenderer.slot_width)
+            blanks = quotient + bool(remainder)
+            text = "{0}{1}{0}".format(" " * blanks, text)
+        self.clear_pixels_buffer()
+        disp_width = self.width
+        disp_height = self.height
+
+        disp_buffer = [[background for x in range(disp_width)] for y in range(disp_height)]
+        text_buffer = self.textRenderer.render_buffer(text, foreground, background)
+
+        # move text buffer to display buffer from right to left with a step of 1 pixel algin at the top
+        for i in range(len(text_buffer[0]) - disp_width):
+            for y in range(disp_height):
+                for x in range(disp_width):
+                    try:
+                        disp_buffer[y][x] = text_buffer[y][i + x]
+                    except:
+                        pass
+            self.pixels = disp_buffer.copy()
+            self.send_pixels()
+            time.sleep(1/30)
 
 
 
@@ -127,6 +153,7 @@ if __name__ == "__main__":
     import time
 
     run = True
+        
 
     try: 
         Matrix = MatrixProtocol()
@@ -173,12 +200,41 @@ if __name__ == "__main__":
             time.sleep(1)
 
 
+            Matrix.scroll_text("ELEKTROTECHNIK")
+
+            '''
+            Matrix.clear_pixels_buffer()
+            background = (0, 0, 0)
+            foreground = (0, 0, 255)
+            text = "ELEKTROTECHNIK"
+            disp_width = 16
+            disp_height = 16
+
+            disp_buffer = [[background for x in range(disp_width)] for y in range(disp_height)]
+            text_buffer = Matrix.textRenderer.render_buffer(text, foreground, background)
+
+            # move text buffer to display buffer from right to left with a step of 1 pixel algin at the top
+            for i in range(len(text_buffer[0]) - disp_width):
+                for y in range(disp_height):
+                    for x in range(disp_width):
+                        try:
+                            disp_buffer[y][x] = text_buffer[y][i + x]
+                        except:
+                            pass
+                Matrix.pixels = disp_buffer.copy()
+                Matrix.send_pixels()
+                time.sleep(1/30)
+            '''
+            
+
+
     except Exception as e:
         print(e)
 
     except KeyboardInterrupt:
         print("KeyboardInterrupt")
         run = False
+        Matrix.reset()
 
     finally:
         if Matrix.ser is not None:

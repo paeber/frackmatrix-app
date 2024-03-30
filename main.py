@@ -20,10 +20,15 @@ from kivy.config import Config
 from kivy.clock import Clock
 from kivy.uix.vkeyboard import VKeyboard
 
+# Import the required Python modules
 import sys
+import threading
+
+# Import the custom modules
 from matrix_protocol import MatrixProtocol
 from ui.image_tab import ImageTab
 
+# Define the global variables
 VERSION = 0.1
 
 WIDTH=16
@@ -42,6 +47,7 @@ serial_ports = Matrix.scan_serial_ports()
 if len(serial_ports) == 0:
     print("No serial ports found")
     serial_ports = ["/dev/tty/Nönö"]
+
 
 class PaintWidget(Widget):
     line_color = ListProperty([1, 1, 1])
@@ -434,9 +440,11 @@ class HomeTab(TabbedPanelItem):
 
         quick_actions_box = BoxLayout(orientation='horizontal', size_hint_y=None, height=70, spacing=10, padding=10)
         quick_actions_label = Label(text='Quick Actions', font_size=24, size_hint_y=None, height=80)
+        animation_button = Button(text='Example', size_hint_x=0.3, on_press=self.scrolling_text)
         reset_button = Button(text='Reset', size_hint_x=0.3, on_press=self.reset_matrix)
 
         quick_actions_box.add_widget(quick_actions_label)
+        quick_actions_box.add_widget(animation_button)
         quick_actions_box.add_widget(reset_button)
         home_box.add_widget(Label(text=''))
 
@@ -466,6 +474,15 @@ class HomeTab(TabbedPanelItem):
 
     def reset_matrix(self, instance):
         Matrix.reset()
+
+    def scrolling_text(self, instance):
+        text = "ELEKTROTECHNIK"
+    
+        def scroll_text_in_background():
+            Matrix.scroll_text(text, foreground=(0, 255, 255), background=(0, 0, 0))
+
+        threading.Thread(target=scroll_text_in_background).start()
+
 
 
 
@@ -515,6 +532,8 @@ class FrackMatrixApp(App):
     def reset_pixel_buttons(self, instance):
         for pixel_button in self.pixel_buttons:
             pixel_button.state = 'normal'  # set button state to up
+
+
 
 # Run the application
 if __name__ == '__main__':

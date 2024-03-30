@@ -44,7 +44,7 @@ class TextRenderer:
         # init a 2D pixel buffer
         width = len(text) * (self.slot_width)
         height = self.slot_height
-        pixel_buffer = [[(0, 0, 0) for x in range(width)] for y in range(height)]
+        pixel_buffer = [[background for x in range(width)] for y in range(height)]
         x = y = 0
         for char in text:
             if char in LUT.Characters:
@@ -54,7 +54,7 @@ class TextRenderer:
                 x += self.char_width + 1
 
         return pixel_buffer
-
+    
 
 if __name__ == "__main__":
     import time

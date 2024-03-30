@@ -342,7 +342,7 @@ class DebugTab(TabbedPanelItem):
         stop_button.background_color = (0, 0, 1, 1)
         self.layout.add_widget(stop_button)
 
-        self.poweroff_button = Button(text='Power Off', size_hint_y=None, height=70, on_press=self.poweroff)
+        self.poweroff_button = Button(text='Power Off', size_hint_y=None, height=70, on_press=self.poweroff_req)
         self.poweroff_button.background_color = (1, 0, 0, 1)
         self.layout.add_widget(self.poweroff_button)
 
@@ -366,7 +366,7 @@ class DebugTab(TabbedPanelItem):
     def stop(self, instance):
         App.get_running_app().stop()
 
-    def poweroff(self, instance):
+    def poweroff_req(self, instance):
         # open popup to enter pin
         pin_popup = Popup(title='Power Off', size_hint=(0.5, 0.8))
         pin_box = BoxLayout(orientation='vertical')
@@ -386,9 +386,20 @@ class DebugTab(TabbedPanelItem):
 
         pin_popup.content = pin_box
         pin_popup.open()
-        if self.pin_input.text == '1234':
-            import os
-            os.system("sudo poweroff")
+
+        # when popup is closed, check pin
+        pin_popup.bind(on_dismiss=self.poweroff)
+            
+    def poweroff(self, instance):
+        try:
+            if self.pin_input.text == '1234':
+                import os
+                print("Powering off...")
+                os.system("sudo poweroff")
+            else:
+                print("Nah mate")
+        except Exception as e:
+            print(e)
 
     
 

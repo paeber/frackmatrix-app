@@ -339,8 +339,12 @@ class DebugTab(TabbedPanelItem):
         restart_button.background_color = (0, 1, 0, 1)
         self.layout.add_widget(restart_button)
         stop_button = Button(text='Stop', size_hint_y=None, height=70, on_press=self.stop)
-        stop_button.background_color = (1, 0, 0, 1)
+        stop_button.background_color = (0, 0, 1, 1)
         self.layout.add_widget(stop_button)
+
+        self.poweroff_button = Button(text='Power Off', size_hint_y=None, height=70, on_press=self.poweroff)
+        self.poweroff_button.background_color = (1, 0, 0, 1)
+        self.layout.add_widget(self.poweroff_button)
 
         self.layout.add_widget(Label(text='', size_hint_y=1))
 
@@ -362,6 +366,31 @@ class DebugTab(TabbedPanelItem):
     def stop(self, instance):
         App.get_running_app().stop()
 
+    def poweroff(self, instance):
+        # open popup to enter pin
+        pin_popup = Popup(title='Power Off', size_hint=(0.5, 0.8))
+        pin_box = BoxLayout(orientation='vertical')
+        self.pin_input = TextInput(hint_text='Enter PIN', multiline=False, font_size=24, size_hint_y=None, height=60)
+
+        pin_keypad = GridLayout(cols=3)
+        for i in range(1, 10):
+            button = Button(text=str(i))
+            button.bind(on_press=lambda x, i=i: setattr(self.pin_input, 'text', self.pin_input.text + str(i)))
+            pin_keypad.add_widget(button)
+        pin_keypad.add_widget(Button(text='C', on_press=lambda x: setattr(self.pin_input, 'text', self.pin_input.text[:-1])))
+        pin_keypad.add_widget(Button(text='0', on_press=lambda x: setattr(self.pin_input, 'text', self.pin_input.text + '0')))
+        pin_keypad.add_widget(Button(text='Enter', on_press=pin_popup.dismiss))
+        
+        pin_box.add_widget(self.pin_input)
+        pin_box.add_widget(pin_keypad)
+
+        pin_popup.content = pin_box
+        pin_popup.open()
+        if self.pin_input.text == '1234':
+            import os
+            os.system("sudo poweroff")
+
+    
 
 class HomeTab(TabbedPanelItem):
     def __init__(self, **kwargs):

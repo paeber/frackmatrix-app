@@ -4,6 +4,7 @@ import serial.tools.list_ports
 import numpy as np
 from PIL import Image
 from text_renderer import TextRenderer
+import threading
 
 class MatrixProtocol:
 
@@ -17,6 +18,8 @@ class MatrixProtocol:
         self.textRenderer = TextRenderer(width, height)
         self.snake = True
         self.mirror = True
+        self.thread = None
+        self.stop_thread = False
 
     def scan_serial_ports(self):
         ports = serial.tools.list_ports.comports()
@@ -81,10 +84,14 @@ class MatrixProtocol:
         else:
             self.pixels[y][x] = (r, g, b)
 
-    def send_pixels(self, snake=True):
+    def send_pixels(self, snake=True, priority=False):
         if self.ser is None:
             print("Serial port not connected")
             return False
+        if threading.current_thread().name == 'MainThread':
+            if self.thread is not None and self.thread.is_alive():
+                print("[WARN]: send_pixels is locked for", self.thread.name)
+                return False
         data = bytes([2])
 
         #convert self.pixels to numpy array
@@ -123,17 +130,24 @@ class MatrixProtocol:
                     r, g, b, a= pixels[x, y]
                 self.set_pixel_buffer(x, y, r, g, b)
 
-    def scroll_text(self, text, line=0, foreground=(255, 255, 255), background=(0, 0, 0), blank=True):
+    def scroll_text(self, text="HELLO", line=0, foreground=(255, 255, 255), background=(0, 0, 0), blank=True, fill=False, **kwargs):
         if blank:
             quotient, remainder = divmod(self.width, self.textRenderer.slot_width)
             blanks = quotient + bool(remainder)
             text = "{0}{1}{0}".format(" " * blanks, text)
+
         self.clear_pixels_buffer()
         disp_width = self.width
         disp_height = self.height
 
         disp_buffer = [[background for x in range(disp_width)] for y in range(disp_height)]
         text_buffer = self.textRenderer.render_buffer(text, foreground, background)
+
+        if fill:
+            # scale up text buffer to display buffer size
+            text_buffer = np.repeat(text_buffer, disp_height // self.textRenderer.char_height, axis=0)
+            text_buffer = np.repeat(text_buffer, disp_width // self.textRenderer.char_width, axis=1)
+            
 
         # move text buffer to display buffer from right to left with a step of 1 pixel algin at the top
         for i in range(len(text_buffer[0]) - disp_width):
@@ -147,6 +161,21 @@ class MatrixProtocol:
             self.send_pixels()
             time.sleep(1/30)
 
+            if self.stop_thread:
+                print("[INFO]: Thread stopped")
+                self.stop_thread = False
+                return
+
+    def run_async(self, task, task_args=()):
+        if self.ser is None:
+            print("Serial port not connected")
+            return False
+        if self.thread is not None and self.thread.is_alive():
+            return False
+        self.thread = threading.Thread(target=task, args=task_args, name="MatrixProtocolThread")
+        self.thread.start()
+        print("[INFO]: Thread {0} started".format(self.thread.name))
+        return self.thread.is_alive()
 
 
 if __name__ == "__main__":
@@ -201,6 +230,7 @@ if __name__ == "__main__":
 
 
             Matrix.scroll_text("ELEKTROTECHNIK")
+
 
             '''
             Matrix.clear_pixels_buffer()

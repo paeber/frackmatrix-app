@@ -7,6 +7,7 @@ from kivy.uix.label import Label
 from kivy.uix.togglebutton import ToggleButton
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.button import Button
+from kivy.uix.checkbox import CheckBox
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.textinput import TextInput
 from kivy.uix.spinner import Spinner
@@ -39,9 +40,18 @@ BOTTOM_KEEPOUT=0
 
 restart = False
 
-# Set the window size
-Window.size = (800, 480)
-Window.show_cursor = False
+# Print welcome message
+print("Frack Matrix v{0}".format(VERSION))
+print(sys.platform)
+
+# Check if the application is running on a Raspberry Pi
+if sys.platform == 'linux':
+    Window.cursor = False
+    Window.size = (800, 480)
+elif sys.platform == 'win32':
+    Window.show_cursor = True
+    Window.size = (800, 480)
+
 
 Matrix = MatrixProtocol(width=WIDTH, height=HEIGHT)
 serial_ports = Matrix.scan_serial_ports()
@@ -253,14 +263,37 @@ class TextTab(TabbedPanelItem):
         self.text_box = GridLayout(cols=1)
         self.text_box.padding = 10
         self.text_box.spacing = 10
+        
+        box_1 = BoxLayout(orientation='horizontal')
         self.text_line_1 = TextInput(text='HELLO', multiline=False, size_hint_y=None, height=52)
         self.text_line_1.font_size = 32
         self.text_line_1.bind(on_touch_down=self.ontouch)
-        self.text_box.add_widget(self.text_line_1)
+        self.check_scroll_1 = CheckBox(size_hint_x=None, width=50)
+        self.check_fill_1 = CheckBox(size_hint_x=None, width=50)
+        box_options_1 = GridLayout(cols=2, size_hint_x=None, width=100)
+        box_options_1.add_widget(Label(text='Scroll', size_hint_x=None, width=50))
+        box_options_1.add_widget(Label(text='Fill', size_hint_x=None, width=50))
+        box_options_1.add_widget(self.check_scroll_1)
+        box_options_1.add_widget(self.check_fill_1)        
+        box_1.add_widget(self.text_line_1)
+        box_1.add_widget(box_options_1)
+        self.text_box.add_widget(box_1)
+
+        box_2 = BoxLayout(orientation='horizontal')
         self.text_line_2 = TextInput(text='WORLD', multiline=False, size_hint_y=None, height=52)
         self.text_line_2.font_size = 32
         self.text_line_2.bind(on_touch_down=self.ontouch)
-        self.text_box.add_widget(self.text_line_2)
+        self.check_scroll_2 = CheckBox(size_hint_x=None, width=50)
+        self.check_fill_2 = CheckBox(size_hint_x=None, width=50)
+        box_2.add_widget(self.text_line_2)
+        box_options_2 = GridLayout(cols=2, size_hint_x=None, width=100)
+        box_options_2.add_widget(Label(text='Scroll', size_hint_x=None, width=50))
+        box_options_2.add_widget(Label(text='Fill', size_hint_x=None, width=50))
+        box_options_2.add_widget(self.check_scroll_2)
+        box_options_2.add_widget(self.check_fill_2)   
+        box_2.add_widget(box_options_2)
+
+        self.text_box.add_widget(box_2)
 
         self.kb = VKeyboard(
             on_key_up=self.vkbinput,
@@ -294,11 +327,23 @@ class TextTab(TabbedPanelItem):
         self.text_box.add_widget(self.kb)
 
     def send_text(self, instance):
-        Matrix.textRenderer.clear()
-        Matrix.textRenderer.add_text(self.text_line_1.text, line=0)
-        Matrix.textRenderer.add_text(self.text_line_2.text, line=1)
-        Matrix.pixels = Matrix.textRenderer.get_buffer()
-        Matrix.send_pixels()
+        if self.check_scroll_1.active:
+            def scroll_text_in_background():
+                Matrix.scroll_text(text=self.text_line_1.text, foreground=(0, 255, 255), background=(0, 0, 0), fill=self.check_fill_1.active, blank=not self.check_fill_1.active)
+
+            Matrix.run_async(scroll_text_in_background)
+
+        elif self.check_scroll_2.active:
+            def scroll_text_in_background():
+                Matrix.scroll_text(text=self.text_line_2.text, foreground=(255, 0, 255), background=(0, 0, 0), fill=self.check_fill_2.active, blank=not self.check_fill_2.active)
+
+            Matrix.run_async(scroll_text_in_background)
+        else:
+            Matrix.textRenderer.clear()
+            Matrix.textRenderer.add_text(self.text_line_1.text, line=0)
+            Matrix.textRenderer.add_text(self.text_line_2.text, line=1)
+            Matrix.pixels = Matrix.textRenderer.get_buffer()
+            Matrix.send_pixels()
 
     def vkbinput(self, keyboard, keycode, *args):
         if self.textbox_number == 1:
@@ -443,10 +488,13 @@ class HomeTab(TabbedPanelItem):
         quick_actions_label = Label(text='Quick Actions', font_size=24, size_hint_y=None, height=80)
         animation_button = Button(text='Example', size_hint_x=0.3, on_press=self.scrolling_text)
         reset_button = Button(text='Reset', size_hint_x=0.3, on_press=self.reset_matrix)
+        kill_thread = Button(text='Kill Thread', size_hint_x=0.3, on_press=self.kill_thread)
 
         quick_actions_box.add_widget(quick_actions_label)
         quick_actions_box.add_widget(animation_button)
         quick_actions_box.add_widget(reset_button)
+        quick_actions_box.add_widget(kill_thread)
+
         home_box.add_widget(Label(text=''))
 
         home_box.add_widget(quick_actions_box)
@@ -476,13 +524,19 @@ class HomeTab(TabbedPanelItem):
     def reset_matrix(self, instance):
         Matrix.reset()
 
+    def kill_thread(self, instance):
+        if Matrix.thread is not None:
+            Matrix.stop_thread = True
+            Matrix.thread.join()
+            Matrix.thread = None
+
     def scrolling_text(self, instance):
         text = "ELEKTROTECHNIK"
     
         def scroll_text_in_background():
             Matrix.scroll_text(text, foreground=(0, 255, 255), background=(0, 0, 0))
 
-        threading.Thread(target=scroll_text_in_background).start()
+        Matrix.run_async(scroll_text_in_background)
 
 
 

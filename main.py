@@ -51,6 +51,10 @@ if sys.platform == 'linux':
 elif sys.platform == 'win32':
     Window.show_cursor = True
     Window.size = (800, 480)
+elif sys.platform == 'darwin':
+    Window.show_cursor = True
+    Window.size = (800, 480)
+    Window.scale = 2
 
 
 Matrix = MatrixProtocol(width=WIDTH, height=HEIGHT)

@@ -5,6 +5,8 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.popup import Popup
 
+import sys
+
 class ImageTab(TabbedPanelItem):
     def __init__(self, **kwargs):
         super(ImageTab, self).__init__(**kwargs)
@@ -27,7 +29,11 @@ class ImageTab(TabbedPanelItem):
         # open file dialog to select image
         from kivy.uix.filechooser import FileChooserIconView
         file_chooser = FileChooserIconView()
-        file_chooser.path = "/home/pi/Pictures"
+        if sys.platform == 'linux':
+            file_chooser.path = "/home/pi/Pictures"
+        else:
+            file_chooser.path = "images"
+
         file_chooser.bind(on_submit=self.load_image_file)
         file_chooser.bind(on_cancel=self.cancel_image_file)
         file_popup = Popup(title='Select Image', content=file_chooser, size_hint=(0.8, 0.8))

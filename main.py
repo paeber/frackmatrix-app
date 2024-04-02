@@ -39,6 +39,7 @@ TOP_KEEPOUT=80
 BOTTOM_KEEPOUT=0
 
 restart = False
+alwayson = False
 
 # Print welcome message
 print("Frack Matrix v{0}".format(VERSION))
@@ -48,6 +49,7 @@ print(sys.platform)
 if sys.platform == 'linux':
     Window.cursor = False
     Window.size = (800, 480)
+    alwayson = True
 elif sys.platform == 'win32':
     Window.show_cursor = True
     Window.size = (800, 480)
@@ -596,10 +598,12 @@ class FrackMatrixApp(App):
 
 # Run the application
 if __name__ == '__main__':
-    FrackMatrixApp().run()
-
-
-if restart:
-    import os
-    print("Restarting...")
-    os.execv("run.sh", sys.argv)
+    try:
+        FrackMatrixApp().run()
+    except Exception as e:
+        print("[ERROR]", e)
+    finally:
+        if restart or alwayson:
+            import os
+            print("Restarting...")
+            os.execv("run.sh", sys.argv)

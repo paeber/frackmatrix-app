@@ -71,6 +71,9 @@ class MatrixProtocol:
         if self.ser is None:
             print("Serial port not connected")
             return False
+        if not (0 <= x < self.width and 0 <= y < self.height):
+            print("Invalid x, y coordinates")
+            return False
         index = self.xy_to_snake(x, y, self.width)
         data = bytes([0, index, r, g, b])
         self.ser.write(data)
@@ -78,6 +81,9 @@ class MatrixProtocol:
         return (ret == b'\x10')
     
     def set_pixel_buffer(self, x, y, r, g, b, snake=False):
+        if not (0 <= x < self.width and 0 <= y < self.height):
+            print("Invalid x, y coordinates")
+            return False
         if snake:
             index = self.xy_to_snake(x, y, self.width)
             self.pixels[index // self.width][index % self.width] = (r, g, b)

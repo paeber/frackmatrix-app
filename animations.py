@@ -1,12 +1,13 @@
 import math
 import time
+import random
 from matrix_protocol import MatrixProtocol
 
 class Animations:
     def __init__(self, matrix: MatrixProtocol):
         self.matrix = matrix
 
-    def sine_wave(self, f, t=0, A=0.9):
+    def sine_wave(self, f, t=0, A=0.9, dt=1/30):
         width = self.matrix.width
         height = self.matrix.height
 
@@ -18,7 +19,8 @@ class Animations:
         # display sine wave in 2d matrix
         prev_y = None
         for x in range(0, width):
-            y = int((math.sin(2 * math.pi * f * ((x + t) / width)) + 1) * (height / 2) * A)
+            y = int((math.sin(2 * math.pi * f * (x + t)) + 1) * (height / 2) * A)
+            t += dt
             if prev_y is not None and abs(y - prev_y) > 1:
                 for i in range(min(y, prev_y), max(y, prev_y)):
                     self.matrix.set_pixel_buffer(x, i, 0, 255, 0)
@@ -68,22 +70,97 @@ class Animations:
             prev_y = y
         self.matrix.send_pixels()
 
+    def random_pixels(self, n=10):
+        width = self.matrix.width
+        height = self.matrix.height
 
+        for i in range(n):
+            x = int(width * random.random())
+            y = int(height * random.random())
+            r = int(255 * random.random())
+            g = int(255 * random.random())
+            b = int(255 * random.random())
+            self.matrix.set_pixel_buffer(x, y, r, g, b)
+        self.matrix.send_pixels()
+
+    def raindrops(self, n=10):
+        width = self.matrix.width
+        height = self.matrix.height
+
+        for i in range(n):
+            x = int(width * random.random())
+            y = int(height * random.random())
+            self.matrix.set_pixel_buffer(x, y, 0, 0, 255)
+        self.matrix.send_pixels()
+
+    def clock(self):
+        from datetime import datetime
+        current_time = datetime.now()
+        hour = current_time.hour
+        minute = current_time.minute
+        time_str = f"{hour:02d}:{minute:02d}"
+
+        self.matrix.clear_pixels_buffer()
+        self.matrix.textRenderer.add_text(time_str, line=0)
+        self.matrix.pixels = self.matrix.textRenderer.get_buffer()
+        self.matrix.send_pixels()
+
+stop_thread = False
+
+def play_animation(matrix: MatrixProtocol, animations: Animations):
+    previous_time = time.time()
+    t = 0
+    dt = 1/30
+    wait = dt
+
+    while not stop_thread:
+        current_time = time.time()
+        time_delta = current_time - previous_time
+        previous_time = current_time
+
+        animations.sine_wave(1, t=t, A=0.9)
+        wait = (dt - time_delta)
+        t += wait
+        if wait < 0:
+            wait = 0
+        time.sleep(wait)
 
 if __name__ == '__main__':
     matrix = MatrixProtocol(port="/dev/cu.usbserial-110")
     matrix.port = "COM12"
     matrix.connect()
 
+    import threading
+
+    thread = None
+
     try:
         animations = Animations(matrix)
         t = 0
+        dt = 1/30
+
+        #thread = threading.Thread(target=play_animation, args=(matrix, animations), name="MatrixProtocolThread")
+        #thread.start()
+
         while True:
-            animations.square_wave(0.4, dc=0.25, t=t, A=1)
-            t += 1
-            t = t % (10*matrix.width)
+            animations.clock()
+            #animations.sine_wave(50, t=t, A=0.9)
+            #animations.sawtooth_wave(50, t=t, A=1)
+            #animations.square_wave(0.4, dc=0.25, t=t, A=1)
+            #animations.random_pixels(10)
+            #animations.raindrops(10)
+
+            #t += dt
+            #t = t % (10*matrix.width)
+            #time.sleep(dt)
+            pass
     
     except KeyboardInterrupt:
+        stop_thread = True
+        print("Stopping thread...")
+        if thread is not None and thread.is_alive():
+            thread.join()
+        
         print("Exiting...")
         matrix.reset()
         

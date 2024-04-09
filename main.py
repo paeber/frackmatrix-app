@@ -66,6 +66,7 @@ if len(serial_ports) == 0:
     serial_ports = ["/dev/tty/Nönö"]
 
 
+
 class PaintWidget(Widget):
     line_color = ListProperty([1, 1, 1])
     line_width = NumericProperty(4)
@@ -121,6 +122,8 @@ class PaintWidget(Widget):
             print("Exception:", e)   
         finally:
             return super(PaintWidget, self).on_touch_move(touch)
+
+
 
 class PaintTab(TabbedPanelItem):
     live_event = None
@@ -186,87 +189,6 @@ class PaintTab(TabbedPanelItem):
             # Stop calling self.save_canvas
             self.live_event.cancel()
 
-            
-
-
-# Define the field button
-class PixelButton(ToggleButton):
-    led = 0
-
-    def __init__(self, **kwargs):
-        super(PixelButton, self).__init__(**kwargs)
-        self.background_color = (0, 0, 0, 1)  # black color
-        self.bind(state=self.on_state)
-        self.size_hint = (1, 1)
-        self.touched = False
-
-    def on_state(self, instance, value):
-        x = self.led % WIDTH
-        y = self.led // WIDTH
-        if value == 'down':  # button is pressed
-            self.background_color = (1, 1, 1, 1)  # white color
-            print(self.led, "on")
-            Matrix.set_pixel_cmd(x, y, 100, 100, 100)
-        else:
-            self.background_color = (0, 0, 0, 1)  # black color
-            print(self.led, "off")
-            Matrix.set_pixel_cmd(x, y, 0, 0, 0)
-
-    def on_touch_down(self, touch):
-        if self.collide_point(*touch.pos) and touch.button == 'left':
-            self.state = 'down'
-        return super(PixelButton, self).on_touch_down(touch)
-    
-    def on_touch_up(self, touch):
-        if self.collide_point(*touch.pos) and touch.button == 'left':
-            self.state = 'normal'
-        return super(PixelButton, self).on_touch_up(touch)
-
-    def on_touch_move(self, touch):
-        if self.collide_point(*touch.pos) and touch.button == 'left':
-            self.state = 'down'   # simulate a click
-            print("move", self.led)
-        return super(PixelButton, self).on_touch_move(touch)
-    
-
-class DrawTab(TabbedPanelItem):
-    pixel_color = ListProperty([1, 1, 1])
-
-    def __init__(self, **kwargs):
-        super(DrawTab, self).__init__(**kwargs)
-        self.text = 'Draw'
-        draw_box = BoxLayout(orientation='vertical')
-        draw_grid = GridLayout(cols=WIDTH, rows=HEIGHT, size_hint=(1, 1))
-        btn_box = BoxLayout(orientation='horizontal', size_hint_y=None, height=80)
-        self.pixel_buttons = []
-        for i in range(WIDTH * HEIGHT):
-            pixel_button = PixelButton()
-            pixel_button.led = i
-            self.pixel_buttons.append(pixel_button)
-            draw_grid.add_widget(pixel_button)
-        draw_box.add_widget(draw_grid)
-        
-        color_picker = ColorPicker()
-        color_picker.bind(color=self.on_color)
-        color_picker_popup = Popup(title='Color Picker', content=color_picker, size_hint=(0.8, 0.8))
-        color_button = Button(text='Pick Color', on_press=color_picker_popup.open)
-        reset_button = Button(text='Reset', on_press=self.reset_pixel_buttons)
-        btn_box.add_widget(color_button)
-        btn_box.add_widget(reset_button)
-        draw_box.add_widget(btn_box)
-
-        self.add_widget(draw_box)
-
-    def reset_pixel_buttons(self, instance):
-        for pixel_button in self.pixel_buttons:
-            pixel_button.state = 'normal'  # set button state to up
-
-    def on_color(self, instance, value):
-        self.pixel_color = value
-        for pixel_button in self.pixel_buttons:
-            if pixel_button.state == 'down':
-                pixel_button.background_color = self.pixel_color
-    
 
 
 class TextTab(TabbedPanelItem):
@@ -434,8 +356,10 @@ class AnimationTab(TabbedPanelItem):
         self.add_widget(self.layout)
 
     def stop_animation(self, instance):
-        #Matrix.stop_animation()
+        # TODO stop the animation thread
         self.status_label.text = 'Stopped'
+
+
 
 class DebugTab(TabbedPanelItem):
     def __init__(self, **kwargs):
@@ -465,7 +389,6 @@ class DebugTab(TabbedPanelItem):
         author_label = Label(text='by Pascal Eberhard', font_size=16, size_hint_y=None, height=20)
         self.layout.add_widget(author_label)
         
-
         self.add_widget(self.layout)
 
     def restart(self, instance):
@@ -626,10 +549,6 @@ class FrackMatrixApp(App):
         # Add a new tab named "Text"
         text_tab = TextTab()
         tab_panel.add_widget(text_tab)
-
-        # Add a new tab named "Draw"
-        #draw_tab = DrawTab()
-        #tab_panel.add_widget(draw_tab)
 
         # Add a new tab named "Image"
         #image_tab = ImageTab()

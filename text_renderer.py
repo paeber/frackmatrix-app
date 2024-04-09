@@ -1,5 +1,5 @@
 
-import LUT
+from LUTs import LUT_5x7
 
 
 class TextRenderer:
@@ -30,12 +30,12 @@ class TextRenderer:
         y = (line) * (self.slot_height)
         x = (slot) * (self.slot_width)
         for char in text:
-            if char in LUT.Characters:
+            if char in LUT_5x7.Characters:
                 for i in range(self.char_height):
                     for j in range(self.char_width):
                         if x + j >= self.width or y + i >= self.height:
                             continue
-                        self.pixels[y + i][x + j] = foreground if LUT.Characters[char][i][j] else background
+                        self.pixels[y + i][x + j] = foreground if LUT_5x7.Characters[char][i][j] else background
             x += self.char_width + 1
 
 
@@ -47,10 +47,10 @@ class TextRenderer:
         pixel_buffer = [[background for x in range(width)] for y in range(height)]
         x = y = 0
         for char in text:
-            if char in LUT.Characters:
+            if char in LUT_5x7.Characters:
                 for i in range(self.char_height):
                     for j in range(self.char_width):
-                        pixel_buffer[y + i][x + j] = foreground if LUT.Characters[char][i][j] else background
+                        pixel_buffer[y + i][x + j] = foreground if LUT_5x7.Characters[char][i][j] else background
                 x += self.char_width + 1
 
         return pixel_buffer

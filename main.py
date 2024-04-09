@@ -78,33 +78,24 @@ class PaintWidget(Widget):
         self.width = self.height * ASPECT_RATIO
 
         if self.width > Window.width:
-            self.width = Window.width - 20
+            self.width = Window.width
             self.height = self.width / ASPECT_RATIO
 
         # Get the size of the window
         window_width, window_height = Window.size
-        self.x = (window_width - self.width) / 2
-        self.y = (window_height - self.height) / 2 - 60
-        self.corners = (self.x, self.y, self.x + self.width, self.y + self.height)       
+        self.x = (window_width / 2) - (self.width / 2)
+        self.y = (window_height / 2) - (self.height / 2)
+        self.corners = (self.x, self.y, self.x + self.width, self.y + self.height)      
         self.clear()
 
-    def show_toolbar(self):
-        # Add button toolbar at the left side of the canvas
-        self.toolbar = BoxLayout(orientation='vertical', size_hint=(None, None), size=(80, self.height))
-        self.toolbar.pos = (self.x - 100, self.y)
-        self.toolbar.add_widget(Button(text='White', size_hint=(None, None), size=(80, 40), on_press=lambda x: self.set_color([1, 1, 1])))
-        self.toolbar.add_widget(Button(text='Black', size_hint=(None, None), size=(80, 40), on_press=lambda x: self.set_color([0, 0, 0])))
-        self.toolbar.add_widget(Button(text='Red', size_hint=(None, None), size=(80, 40), on_press=lambda x: self.set_color([1, 0, 0])))
-        self.toolbar.add_widget(Button(text='Green', size_hint=(None, None), size=(80, 40), on_press=lambda x: self.set_color([0, 1, 0])))
-        self.toolbar.add_widget(Button(text='Blue', size_hint=(None, None), size=(80, 40), on_press=lambda x: self.set_color([0, 0, 1])))
-        self.add_widget(self.toolbar)
 
     def set_color(self, color):
         self.line_color = color
         
     def clear(self):
         self.canvas.clear()
-        self.show_toolbar()
+        self.x = self.corners[0]
+        self.y = self.corners[1]
         with self.canvas:
             Color(0, 0, 0)
             Rectangle(pos=(self.x, self.y), size=(self.width, self.height))
@@ -117,7 +108,7 @@ class PaintWidget(Widget):
                     touch.ud['line'] = Line(points=(touch.x, touch.y), width=self.line_width)
                 return True
         except Exception as e:
-            print(e)
+            print("Exception:", e)
         finally:
             return super(PaintWidget, self).on_touch_down(touch)
 
@@ -127,7 +118,7 @@ class PaintWidget(Widget):
                 touch.ud['line'].points += [touch.x, touch.y]
                 return True
         except Exception as e:
-            print(e)   
+            print("Exception:", e)   
         finally:
             return super(PaintWidget, self).on_touch_move(touch)
 
@@ -139,26 +130,42 @@ class PaintTab(TabbedPanelItem):
         self.text = 'Paint'
         box = BoxLayout(orientation='vertical')
         btn_box = BoxLayout(orientation='horizontal', size_hint_y=None, height=80)
+
         self.paint_widget = PaintWidget()
-        color_picker = ColorPicker()
-        color_picker.bind(color=self.on_color)
-        color_picker_popup = Popup(title='Color Picker', content=color_picker, size_hint=(0.8, 0.8))
-        color_button = Button(text='Pick Color')
-        color_button.bind(on_press=color_picker_popup.open)
+       
+        color_spinner = Spinner(text='White', values=('White', 'Black', 'Red', 'Green', 'Blue', 'Custom'))
+        color_spinner.bind(text=self.new_color)
         clear_button = Button(text='Clear')
         clear_button.bind(on_press=self.clear_canvas)
         save_button = Button(text='Save')
         save_button.bind(on_press=self.save_canvas)
         live_button = ToggleButton(text='Live')
         live_button.bind(on_press=self.live_canvas)
+
         box.add_widget(self.paint_widget)
-        btn_box.add_widget(color_button)
+        btn_box.add_widget(color_spinner)
         btn_box.add_widget(clear_button)
         btn_box.add_widget(save_button)
         btn_box.add_widget(live_button)
         box.add_widget(btn_box)
         self.add_widget(box)
         
+    def new_color(self, instance, value):
+        if value == 'White':
+            self.paint_widget.line_color = [1, 1, 1]
+        elif value == 'Black':
+            self.paint_widget.line_color = [0, 0, 0]
+        elif value == 'Red':
+            self.paint_widget.line_color = [1, 0, 0]
+        elif value == 'Green':
+            self.paint_widget.line_color = [0, 1, 0]
+        elif value == 'Blue':
+            self.paint_widget.line_color = [0, 0, 1]
+        elif value == 'Custom':
+            color_picker = ColorPicker()
+            color_picker.bind(color=self.on_color)
+            color_picker_popup = Popup(title='Color Picker', content=color_picker, size_hint=(0.8, 0.8))
+            color_picker_popup.open()
 
     def on_color(self, instance, value):
         self.paint_widget.line_color = value
@@ -352,6 +359,7 @@ class TextTab(TabbedPanelItem):
             Matrix.send_pixels()
 
     def vkbinput(self, keyboard, keycode, *args):
+        ignore = ['shift', 'tab', 'capslock', 'layout']
         if self.textbox_number == 1:
             text = self.text_line_1.text
         elif self.textbox_number == 2:
@@ -363,15 +371,9 @@ class TextTab(TabbedPanelItem):
             text = f'{text} '
         elif keycode == 'enter':
             self.send_text(None)
-        elif keycode == 'shift':
-            pass
-        elif keycode == 'tab':
-            pass
-        elif keycode == 'capslock':
-            pass
         elif keycode == 'escape':
             text = ''
-        elif keycode == 'layout':
+        elif keycode in ignore:
             pass
         else:
             text = f'{text}{keycode.upper()}'
@@ -381,8 +383,59 @@ class TextTab(TabbedPanelItem):
         elif self.textbox_number == 2:
             self.text_line_2.text = text
 
-        print("Key:", keycode)
 
+
+class AnimationTab(TabbedPanelItem):
+    def __init__(self, **kwargs):
+        super(AnimationTab, self).__init__(**kwargs)
+        self.text = 'Animation'
+        self.layout = GridLayout(cols=1)
+        self.layout.padding = 10
+        self.layout.spacing = 10
+
+        # Status row
+        status_box = BoxLayout(orientation='horizontal', size_hint_y=None, height=70)
+        status_label = Label(text='Status:')
+        self.status_label = Label(text='Stopped', size_hint_x=0.4)
+        stop_button = Button(text='Stop', size_hint_x=0.3, on_press=self.stop_animation)
+        status_box.add_widget(status_label)
+        status_box.add_widget(self.status_label)
+        status_box.add_widget(stop_button)
+        self.layout.add_widget(status_box)
+
+        # Radio buttons for selecting the animation
+        wave_box = BoxLayout(orientation='horizontal')
+        wave_label = Label(text='Wave')
+        sine_button = ToggleButton(text='Sine', group='animation')
+        square_button = ToggleButton(text='Square', group='animation')
+        saw_button = ToggleButton(text='Saw', group='animation')
+
+        wave_box.add_widget(wave_label)
+        wave_box.add_widget(sine_button)
+        wave_box.add_widget(square_button)
+        wave_box.add_widget(saw_button)
+        self.layout.add_widget(wave_box)
+
+        # Radio buttons for selecting special apps
+        app_box = BoxLayout(orientation='horizontal')
+        app_label = Label(text='Special')
+        clock_button = ToggleButton(text='Clock', group='animation')
+        music_button = ToggleButton(text='Music', group='animation')
+        rainbow_button = ToggleButton(text='Rainbow', group='animation')
+        fire_button = ToggleButton(text='Fire', group='animation')
+        
+        app_box.add_widget(app_label)
+        app_box.add_widget(clock_button)
+        app_box.add_widget(music_button)
+        app_box.add_widget(rainbow_button)
+        app_box.add_widget(fire_button)
+        self.layout.add_widget(app_box)
+
+        self.add_widget(self.layout)
+
+    def stop_animation(self, instance):
+        #Matrix.stop_animation()
+        self.status_label.text = 'Stopped'
 
 class DebugTab(TabbedPanelItem):
     def __init__(self, **kwargs):
@@ -560,23 +613,27 @@ class FrackMatrixApp(App):
 
         # Create a tabbed panel
         tab_panel = TabbedPanel()
-        tab_panel.tab_height = TOP_KEEPOUT
+        tab_panel.tab_height_hint = 0.15
 
         # Add a new tab named "Home"
         home_tab = HomeTab()
         tab_panel.add_widget(home_tab)
+
+        # Add a new tab named "Animation"
+        animation_tab = AnimationTab()
+        tab_panel.add_widget(animation_tab)
 
         # Add a new tab named "Text"
         text_tab = TextTab()
         tab_panel.add_widget(text_tab)
 
         # Add a new tab named "Draw"
-        draw_tab = DrawTab()
-        tab_panel.add_widget(draw_tab)
+        #draw_tab = DrawTab()
+        #tab_panel.add_widget(draw_tab)
 
         # Add a new tab named "Image"
-        image_tab = ImageTab()
-        tab_panel.add_widget(image_tab)
+        #image_tab = ImageTab()
+        #tab_panel.add_widget(image_tab)
 
         # Add a new tab named "Paint"
         paint_tab = PaintTab()

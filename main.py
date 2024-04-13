@@ -536,7 +536,8 @@ class FrackMatrixApp(App):
 
         # Create a tabbed panel
         tab_panel = TabbedPanel()
-        tab_panel.tab_height_hint = 0.15
+        #tab_panel.tab_height_hint = 0.15
+        tab_panel.tab_height = 80
 
         # Add a new tab named "Home"
         home_tab = HomeTab()

@@ -6,8 +6,32 @@ from matrix_protocol import MatrixProtocol
 class Animations:
     def __init__(self, matrix: MatrixProtocol):
         self.matrix = matrix
+        self.func = self.sine_wave
+        self.stop_thread = False
+        self.delay = 0.01
+        self.thread = None
 
-    def sine_wave(self, f, t=0, A=0.9, dt=1/30):
+    def thread_func(self):
+        print("Starting Animation Thread")
+        t = 0
+        while not self.stop_thread:
+            self.func(t=t, f=4, dt=self.delay)
+            time.sleep(self.delay)
+            t += self.delay
+
+    def stop(self):
+        self.stop_thread = True
+        if self.thread is not None and self.thread.is_alive():
+            self.thread.join()
+        print("Animation Thread Stopped")
+        self.matrix.clear()
+        
+    def start(self):
+        self.stop_thread = False
+        self.thread = threading.Thread(target=self.thread_func, name="AnimationThread")
+        self.thread.start()
+
+    def sine_wave(self, f=100, t=0, A=0.9, dt=1/30, **kwargs):
         width = self.matrix.width
         height = self.matrix.height
 
@@ -28,7 +52,7 @@ class Animations:
             prev_y = y
         self.matrix.send_pixels()
 
-    def sawtooth_wave(self, f, t=0, A=0.9):
+    def sawtooth_wave(self, f=100, t=0, A=0.9, **kwargs):
         width = self.matrix.width
         height = self.matrix.height
 
@@ -50,7 +74,7 @@ class Animations:
 
         self.matrix.send_pixels()
 
-    def square_wave(self, f, dc=0.5, t=0, A=0.9):
+    def square_wave(self, f=100, dc=0.5, t=0, A=0.9, **kwargs):
         width = self.matrix.width
         height = self.matrix.height
 
@@ -70,7 +94,7 @@ class Animations:
             prev_y = y
         self.matrix.send_pixels()
 
-    def random_pixels(self, n=10):
+    def random_pixels(self, n=10, **kwargs):
         width = self.matrix.width
         height = self.matrix.height
 
@@ -83,7 +107,7 @@ class Animations:
             self.matrix.set_pixel_buffer(x, y, r, g, b)
         self.matrix.send_pixels()
 
-    def raindrops(self, n=10):
+    def raindrops(self, n=10, **kwargs):
         width = self.matrix.width
         height = self.matrix.height
 
@@ -93,7 +117,7 @@ class Animations:
             self.matrix.set_pixel_buffer(x, y, 0, 0, 255)
         self.matrix.send_pixels()
 
-    def clock(self):
+    def clock(self, **kwargs):
         from datetime import datetime
         current_time = datetime.now()
         hour = current_time.hour
@@ -101,7 +125,8 @@ class Animations:
         time_str = f"{hour:02d}:{minute:02d}"
 
         self.matrix.clear_pixels_buffer()
-        self.matrix.textRenderer.add_text(time_str, line=0)
+        self.matrix.textRenderer.add_text(time_str.split(":")[0], line=0)
+        self.matrix.textRenderer.add_text(time_str.split(":")[1], line=1)
         self.matrix.pixels = self.matrix.textRenderer.get_buffer()
         self.matrix.send_pixels()
 
@@ -127,7 +152,7 @@ def play_animation(matrix: MatrixProtocol, animations: Animations):
 
 if __name__ == '__main__':
     matrix = MatrixProtocol(port="/dev/cu.usbserial-110")
-    matrix.port = "COM12"
+    #matrix.port = "COM12"
     matrix.connect()
 
     import threading
@@ -142,8 +167,10 @@ if __name__ == '__main__':
         #thread = threading.Thread(target=play_animation, args=(matrix, animations), name="MatrixProtocolThread")
         #thread.start()
 
+        animations.start()
+
         while True:
-            animations.clock()
+            #animations.clock()
             #animations.sine_wave(50, t=t, A=0.9)
             #animations.sawtooth_wave(50, t=t, A=1)
             #animations.square_wave(0.4, dc=0.25, t=t, A=1)
@@ -152,8 +179,15 @@ if __name__ == '__main__':
 
             #t += dt
             #t = t % (10*matrix.width)
-            #time.sleep(dt)
-            pass
+            
+            # check if user pressed a key
+            arg = input("Press any key to change animation: ")
+            if arg:
+                animations.stop()           
+                entries = [animations.clock, animations.raindrops, animations.random_pixels, animations.sine_wave, animations.sawtooth_wave, animations.square_wave]
+                animations.func = random.choice(entries)
+                animations.start()
+
     
     except KeyboardInterrupt:
         stop_thread = True
@@ -163,6 +197,7 @@ if __name__ == '__main__':
         
         print("Exiting...")
         matrix.reset()
-        
+        time.sleep(1)
+
     finally:
         matrix.disconnect()

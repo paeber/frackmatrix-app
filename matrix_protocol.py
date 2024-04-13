@@ -66,6 +66,10 @@ class MatrixProtocol:
         for y in range(self.height):
             for x in range(self.width):
                 self.pixels[y][x] = (0, 0, 0)
+
+    def clear(self):
+        self.clear_pixels_buffer()
+        self.send_pixels()
     
     def set_pixel_cmd(self, x, y, r, g, b):
         if self.ser is None:

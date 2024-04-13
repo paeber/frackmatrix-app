@@ -7,6 +7,7 @@ from kivy.uix.label import Label
 from kivy.uix.togglebutton import ToggleButton
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.button import Button
+from kivy.uix.slider import Slider
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.textinput import TextInput
@@ -14,7 +15,7 @@ from kivy.uix.spinner import Spinner
 from kivy.uix.widget import Widget
 from kivy.uix.colorpicker import ColorPicker
 from kivy.uix.popup import Popup
-from kivy.properties import ListProperty, NumericProperty
+from kivy.properties import ListProperty, NumericProperty, StringProperty
 from kivy.graphics import Color, Line, Rectangle
 from kivy.core.window import Window
 from kivy.config import Config
@@ -28,6 +29,7 @@ import threading
 # Import the custom modules
 from matrix_protocol import MatrixProtocol
 from ui.image_tab import ImageTab
+from animations import Animations
 
 # Define the global variables
 VERSION = 0.1
@@ -60,6 +62,7 @@ elif sys.platform == 'darwin':
 
 
 Matrix = MatrixProtocol(width=WIDTH, height=HEIGHT)
+Anims = Animations(Matrix)
 serial_ports = Matrix.scan_serial_ports()
 if len(serial_ports) == 0:
     print("No serial ports found")
@@ -308,6 +311,7 @@ class TextTab(TabbedPanelItem):
 
 
 class AnimationTab(TabbedPanelItem):
+
     def __init__(self, **kwargs):
         super(AnimationTab, self).__init__(**kwargs)
         self.text = 'Animation'
@@ -326,11 +330,11 @@ class AnimationTab(TabbedPanelItem):
         self.layout.add_widget(status_box)
 
         # Radio buttons for selecting the animation
-        wave_box = BoxLayout(orientation='horizontal')
+        wave_box = BoxLayout(orientation='horizontal', size_hint_y=0.1)
         wave_label = Label(text='Wave')
-        sine_button = ToggleButton(text='Sine', group='animation')
-        square_button = ToggleButton(text='Square', group='animation')
-        saw_button = ToggleButton(text='Saw', group='animation')
+        sine_button = ToggleButton(text='Sine', group='animation', on_press=self.set_new_animation)
+        square_button = ToggleButton(text='Square', group='animation', on_press=self.set_new_animation)
+        saw_button = ToggleButton(text='Saw', group='animation', on_press=self.set_new_animation)
 
         wave_box.add_widget(wave_label)
         wave_box.add_widget(sine_button)
@@ -338,13 +342,37 @@ class AnimationTab(TabbedPanelItem):
         wave_box.add_widget(saw_button)
         self.layout.add_widget(wave_box)
 
+        # Parameters for the animation
+        param_box = GridLayout(cols=3, size_hint_y=0.4)
+        param_box.add_widget(Label(text='Frequency'))
+        self.freq_slider = Slider(min=1, max=100, value=4, step=1, on_touch_move=self.set_params)
+        self.freq_value = Label(text=str(self.freq_slider.value))
+        param_box.add_widget(self.freq_slider)
+        param_box.add_widget(self.freq_value)
+
+        param_box.add_widget(Label(text='Amplitude'))
+        self.amp_slider = Slider(min=0, max=1, value=0.9, step=0.1, on_touch_move=self.set_params)
+        self.amp_value = Label(text=str(self.amp_slider.value))
+
+        param_box.add_widget(self.amp_slider)
+        param_box.add_widget(self.amp_value)
+
+        param_box.add_widget(Label(text='Duty Cycle'))
+        self.dc_slider = Slider(min=0, max=1, value=0.5, step=0.1, on_touch_move=self.set_params)
+        self.dc_value = Label(text=str(self.dc_slider.value))
+        param_box.add_widget(self.dc_slider)
+        param_box.add_widget(self.dc_value)
+
+        self.layout.add_widget(param_box)
+
+
         # Radio buttons for selecting special apps
-        app_box = BoxLayout(orientation='horizontal')
+        app_box = BoxLayout(orientation='horizontal', size_hint_y=0.1)
         app_label = Label(text='Special')
-        clock_button = ToggleButton(text='Clock', group='animation')
-        music_button = ToggleButton(text='Music', group='animation')
-        rainbow_button = ToggleButton(text='Rainbow', group='animation')
-        fire_button = ToggleButton(text='Fire', group='animation')
+        clock_button = ToggleButton(text='Clock', group='animation', on_press=self.set_new_animation)
+        music_button = ToggleButton(text='Music', group='animation', on_press=self.set_new_animation)
+        rainbow_button = ToggleButton(text='Rainbow', group='animation', on_press=self.set_new_animation)
+        fire_button = ToggleButton(text='Fire', group='animation', on_press=self.set_new_animation)
         
         app_box.add_widget(app_label)
         app_box.add_widget(clock_button)
@@ -356,8 +384,35 @@ class AnimationTab(TabbedPanelItem):
         self.add_widget(self.layout)
 
     def stop_animation(self, instance):
-        # TODO stop the animation thread
+        Anims.stop()
         self.status_label.text = 'Stopped'
+
+    def set_params(self, instance, value):
+        Anims.freq = self.freq_slider.value
+        Anims.A = self.amp_slider.value
+        Anims.dc = self.dc_slider.value
+        self.freq_value.text = str(self.freq_slider.value)
+        self.amp_value.text = str(self.amp_slider.value)
+        self.dc_value.text = str(self.dc_slider.value)
+
+    def set_new_animation(self, instance):
+        Anims.stop()
+        if instance.state == 'down':
+            self.status_label.text = 'Running'
+            if instance.text == 'Sine':
+                Anims.func = Anims.sine_wave
+            elif instance.text == 'Square':
+                Anims.func = Anims.square_wave
+            elif instance.text == 'Saw':
+                Anims.func = Anims.sawtooth_wave
+            elif instance.text == 'Clock':
+                Anims.func = Anims.clock
+            elif instance.text == 'Raindrops':
+                Anims.func = Anims.raindrops
+            elif instance.text == 'Random':
+                Anims.func = Anims.random_pixels
+            Anims.start()
+
 
 
 
@@ -447,7 +502,7 @@ class HomeTab(TabbedPanelItem):
         connection_label = Label(text='Connection', font_size=48, size_hint_y=None, height=80)
         home_box.add_widget(connection_label)
 
-        serial_port_label = Label(text='Serial Port:', size_hint_x=0.5)
+        serial_port_label = Label(text='Port:', size_hint_x=0.2)
         connection_box.add_widget(serial_port_label)
         self.serial_port_spinner = Spinner(text=str(serial_ports[0]), values=serial_ports)
         self.serial_port_spinner.size_hint_x = 1
@@ -459,7 +514,7 @@ class HomeTab(TabbedPanelItem):
         self.baud_rate_spinner = Spinner(text='115200', values=('9600', '19200', '38400', '57600', '115200'), size_hint_x=0.5)
         connection_box.add_widget(self.baud_rate_spinner)
 
-        self.connect_button = Button(text='Connect', size_hint_x=0.3)
+        self.connect_button = Button(text='Connect', size_hint_x=0.4)
         self.connect_button.bind(on_release=self.connect)
         self.connect_button.background_color = (0, 1, 0, 1)
         connection_box.add_widget(self.connect_button)

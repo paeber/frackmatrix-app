@@ -2,6 +2,7 @@ import math
 import time
 import random
 from matrix_protocol import MatrixProtocol
+import threading
 
 class Animations:
     def __init__(self, matrix: MatrixProtocol):
@@ -10,12 +11,16 @@ class Animations:
         self.stop_thread = False
         self.delay = 0.01
         self.thread = None
+        self.options = [self.sine_wave, self.sawtooth_wave, self.square_wave, self.random_pixels, self.raindrops, self.clock]
+        self.freq = 1
+        self.A = 0.9
+        self.dc = 0.5
 
     def thread_func(self):
         print("Starting Animation Thread")
         t = 0
         while not self.stop_thread:
-            self.func(t=t, f=4, dt=self.delay)
+            self.func(t=t, f=self.freq, dt=self.delay, A=self.A, dc=self.dc)
             time.sleep(self.delay)
             t += self.delay
 

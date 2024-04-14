@@ -11,7 +11,7 @@ class Animations:
         self.stop_thread = False
         self.delay = 0.01
         self.thread = None
-        self.options = [self.sine_wave, self.sawtooth_wave, self.square_wave, self.random_pixels, self.raindrops, self.clock]
+        self.options = [self.sine_wave, self.sawtooth_wave, self.square_wave, self.random_pixels, self.raindrops, self.clock, self.rainbow]
         self.freq = 1
         self.A = 0.9
         self.dc = 0.5
@@ -135,27 +135,42 @@ class Animations:
         self.matrix.pixels = self.matrix.textRenderer.get_buffer()
         self.matrix.send_pixels()
 
-stop_thread = False
+    def rainbow(self, t=0, **kwargs):
+        width = self.matrix.width
+        height = self.matrix.height
+        
+        # move rainbow colors in 2d matrix
+        for x in range(0, width):
+            for y in range(0, height):
+                r = int(127 * (math.sin(0.3 * (x + t)) + 1))
+                g = int(127 * (math.sin(0.3 * (y + t)) + 1))
+                b = int(127 * (math.sin(0.3 * (x + y + 2*t)) + 1))
+                self.matrix.set_pixel_buffer(x, y, r, g, b)
+        self.matrix.send_pixels()
 
-def play_animation(matrix: MatrixProtocol, animations: Animations):
-    previous_time = time.time()
-    t = 0
-    dt = 1/30
-    wait = dt
-
-    while not stop_thread:
-        current_time = time.time()
-        time_delta = current_time - previous_time
-        previous_time = current_time
-
-        animations.sine_wave(1, t=t, A=0.9)
-        wait = (dt - time_delta)
-        t += wait
-        if wait < 0:
-            wait = 0
-        time.sleep(wait)
 
 if __name__ == '__main__':
+    stop_thread = False
+
+    def play_animation(matrix: MatrixProtocol, animations: Animations):
+        previous_time = time.time()
+        t = 0
+        dt = 1/30
+        wait = dt
+
+        while not stop_thread:
+            current_time = time.time()
+            time_delta = current_time - previous_time
+            previous_time = current_time
+
+            animations.sine_wave(1, t=t, A=0.9)
+            wait = (dt - time_delta)
+            t += wait
+            if wait < 0:
+                wait = 0
+            time.sleep(wait)
+
+
     matrix = MatrixProtocol(port="/dev/cu.usbserial-110")
     #matrix.port = "COM12"
     matrix.connect()
@@ -171,6 +186,7 @@ if __name__ == '__main__':
 
         #thread = threading.Thread(target=play_animation, args=(matrix, animations), name="MatrixProtocolThread")
         #thread.start()
+        animations.func = animations.rainbow
 
         animations.start()
 

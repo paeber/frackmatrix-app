@@ -38,6 +38,7 @@ class MatrixProtocol:
             return False
         print("Disconnect from port: " + self.port)
         self.ser.close()
+        self.ser = None
         return True
 
     def reset(self):

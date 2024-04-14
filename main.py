@@ -32,7 +32,7 @@ from ui.image_tab import ImageTab
 from animations import Animations
 
 # Define the global variables
-VERSION = 0.1
+VERSION = 0.2
 
 WIDTH=16
 HEIGHT=16
@@ -373,12 +373,14 @@ class AnimationTab(TabbedPanelItem):
         music_button = ToggleButton(text='Music', group='animation', on_press=self.set_new_animation)
         rainbow_button = ToggleButton(text='Rainbow', group='animation', on_press=self.set_new_animation)
         fire_button = ToggleButton(text='Fire', group='animation', on_press=self.set_new_animation)
+        raindrops_button = ToggleButton(text='Raindrops', group='animation', on_press=self.set_new_animation)
         
         app_box.add_widget(app_label)
         app_box.add_widget(clock_button)
         app_box.add_widget(music_button)
         app_box.add_widget(rainbow_button)
         app_box.add_widget(fire_button)
+        app_box.add_widget(raindrops_button)
         self.layout.add_widget(app_box)
 
         self.add_widget(self.layout)
@@ -411,6 +413,8 @@ class AnimationTab(TabbedPanelItem):
                 Anims.func = Anims.raindrops
             elif instance.text == 'Random':
                 Anims.func = Anims.random_pixels
+            elif instance.text == 'Rainbow':
+                Anims.func = Anims.rainbow
             Anims.start()
 
 
@@ -509,7 +513,7 @@ class HomeTab(TabbedPanelItem):
         self.serial_port_spinner.bind(on_press=self.scan)
         connection_box.add_widget(self.serial_port_spinner)
 
-        baud_rate_label = Label(text='Baud Rate:', size_hint_x=0.5)
+        baud_rate_label = Label(text='Baud:', size_hint_x=0.2)
         connection_box.add_widget(baud_rate_label)
         self.baud_rate_spinner = Spinner(text='115200', values=('9600', '19200', '38400', '57600', '115200'), size_hint_x=0.5)
         connection_box.add_widget(self.baud_rate_spinner)
@@ -539,18 +543,17 @@ class HomeTab(TabbedPanelItem):
         self.add_widget(home_box)
 
     def connect(self, instance):
-        Matrix.port = self.serial_port_spinner.text
-        Matrix.baudrate = int(self.baud_rate_spinner.text)
-        Matrix.connect()
-        self.connect_button.text = 'Disconnect'
-        self.connect_button.bind(on_release=self.disconnect)
-        self.connect_button.background_color = (1, 0, 0, 1)
-
-    def disconnect(self, instance):
-        Matrix.disconnect()
-        self.connect_button.text = 'Connect'
-        self.connect_button.bind(on_release=self.connect)
-        self.connect_button.background_color = (0, 1, 0, 1)
+        action = instance.text
+        if action == "Connect":
+            Matrix.port = self.serial_port_spinner.text
+            Matrix.baudrate = int(self.baud_rate_spinner.text)
+            Matrix.connect()
+            self.connect_button.text = 'Disconnect'
+            self.connect_button.background_color = (1, 0, 0, 1)
+        elif action == "Disconnect":
+            Matrix.disconnect()
+            self.connect_button.text = 'Connect'
+            self.connect_button.background_color = [0, 1, 0, 1]
 
     def scan(self, instance):
         self.serial_ports = Matrix.scan_serial_ports()

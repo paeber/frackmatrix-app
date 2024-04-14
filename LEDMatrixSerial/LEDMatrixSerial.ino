@@ -37,7 +37,7 @@ void setup() {
   }
   FastLED.show();
 
-  Serial.begin(115200);
+  Serial.begin(1000000);
 
 }
 
@@ -55,7 +55,7 @@ void serialEvent() {
       y = (int)drawIn[1];
       drawIndex = (int)(y * width) + x;
       //drawIndex = xy_to_snake(x, y, width);
-    return x, y
+      //return x, y
 
       leds[drawIndex] = CRGB((byte)drawIn[2], (byte)drawIn[3], (byte)drawIn[4]);
       FastLED.show();
@@ -82,7 +82,13 @@ void serialEvent() {
       break;
 
     case 10:
-      Serial.flush()
+      Serial.flush();
+      break;
+
+    case 11:
+      Serial.write(width);
+      Serial.write(height);
+      break;
   }
 
   Serial.write(16);

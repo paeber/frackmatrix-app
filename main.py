@@ -515,7 +515,7 @@ class HomeTab(TabbedPanelItem):
 
         baud_rate_label = Label(text='Baud:', size_hint_x=0.2)
         connection_box.add_widget(baud_rate_label)
-        self.baud_rate_spinner = Spinner(text='115200', values=('9600', '19200', '38400', '57600', '115200'), size_hint_x=0.5)
+        self.baud_rate_spinner = Spinner(text='1000000', values=('9600', '115200', '250000', '500000', '1000000'), size_hint_x=0.5)
         connection_box.add_widget(self.baud_rate_spinner)
 
         self.connect_button = Button(text='Connect', size_hint_x=0.4)

@@ -8,7 +8,7 @@ import threading
 
 class MatrixProtocol:
 
-    def __init__(self, port='/dev/ttyUSB0', baudrate=115200, width=16, height=16):
+    def __init__(self, port='/dev/ttyUSB0', baudrate=1000000, width=16, height=16):
         self.port = port
         self.baudrate = baudrate
         self.ser = None
@@ -49,6 +49,16 @@ class MatrixProtocol:
         self.ser.write(data)
         ret = self.ser.read(1)
         return (ret == b'\x10')
+    
+    def get_size(self):
+        if self.ser is None:
+            print("Serial port not connected")
+            return False
+        self.ser.write(bytes([11]))
+        ret = self.ser.read(3)
+        print(ret)
+        return ret[2] == b'\x10'
+
 
     def xy_to_snake(self, x, y, width):
         if y % 2 == 0:

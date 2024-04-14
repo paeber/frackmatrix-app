@@ -1,5 +1,6 @@
 
 from LUTs import LUT_5x7
+import numpy as np
 
 
 class TextRenderer:
@@ -25,8 +26,10 @@ class TextRenderer:
         return self.pixels.copy()
 
 
-    def add_text(self, text, line=0, slot=0, foreground=(255, 255, 255), background=(0, 0, 0)):
+    def add_text(self, text, line=0, slot=0, scale=False, foreground=(255, 255, 255), background=(0, 0, 0)):
         text = text.upper()
+        if scale:
+            line = slot = 0
         y = (line) * (self.slot_height)
         x = (slot) * (self.slot_width)
         for char in text:
@@ -37,6 +40,12 @@ class TextRenderer:
                             continue
                         self.pixels[y + i][x + j] = foreground if LUT_5x7.Characters[char][i][j] else background
             x += self.char_width + 1
+        
+        if scale:
+            # scale up text buffer to display buffer size
+            factor = self.height // self.char_height
+            self.pixels = np.repeat(self.pixels, factor, axis=0)
+            self.pixels = np.repeat(self.pixels, factor, axis=1)
 
 
     def render_buffer(self, text, foreground=(255, 255, 255), background=(0, 0, 0)):

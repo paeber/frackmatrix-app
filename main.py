@@ -583,6 +583,7 @@ class HomeTab(TabbedPanelItem):
 
 # Define the application class
 class FrackMatrixApp(App):
+    matrix = Matrix
 
     def __init__(self, **kwargs):
         super(FrackMatrixApp, self).__init__(**kwargs)
@@ -610,8 +611,8 @@ class FrackMatrixApp(App):
         tab_panel.add_widget(text_tab)
 
         # Add a new tab named "Image"
-        #image_tab = ImageTab()
-        #tab_panel.add_widget(image_tab)
+        image_tab = ImageTab()
+        tab_panel.add_widget(image_tab)
 
         # Add a new tab named "Paint"
         paint_tab = PaintTab()

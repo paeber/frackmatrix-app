@@ -197,7 +197,13 @@ class MatrixProtocol:
         self.thread.start()
         print("[INFO]: Thread {0} started".format(self.thread.name))
         return self.thread.is_alive()
-
+    
+    def stop_async(self):
+        if self.thread is not None and self.thread.is_alive():
+            self.stop_thread = True
+            self.thread.join()
+            return True
+        return False
 
 if __name__ == "__main__":
     import time
@@ -208,7 +214,7 @@ if __name__ == "__main__":
     try: 
         Matrix = MatrixProtocol()
         #ports = Matrix.scan_serial_ports()
-        ports = ["COM12"]
+        ports = ["COM27"]
         if(len(ports) < 1):
             print("No port found")
             exit()

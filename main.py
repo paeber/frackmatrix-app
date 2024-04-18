@@ -456,6 +456,9 @@ class DebugTab(TabbedPanelItem):
         App.get_running_app().stop()
 
     def stop(self, instance):
+        global restart, alwayson
+        allways_on = False
+        restart = False
         App.get_running_app().stop()
 
     def poweroff_req(self, instance):

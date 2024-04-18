@@ -15,6 +15,9 @@ cat << "EOF"
 ======================================================================
 EOF
 
+echo "Load kernel modules..."
+sudo modprobe snd_aloop
+
 # Name of the branch to check
 branch="main"
 

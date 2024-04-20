@@ -187,13 +187,14 @@ class MatrixProtocol:
                 self.stop_thread = False
                 return
 
-    def run_async(self, task, task_args=()):
+    def run_async(self, task, task_args=(), name="MatrixProtocolThread"):
         if self.ser is None:
             print("Serial port not connected")
             return False
         if self.thread is not None and self.thread.is_alive():
             return False
-        self.thread = threading.Thread(target=task, args=task_args, name="MatrixProtocolThread")
+        self.stop_thread = False
+        self.thread = threading.Thread(target=task, args=task_args, name=name)
         self.thread.start()
         print("[INFO]: Thread {0} started".format(self.thread.name))
         return self.thread.is_alive()
@@ -204,6 +205,18 @@ class MatrixProtocol:
             self.thread.join()
             return True
         return False
+    
+    def start_auto_buffer(self):
+        def update_matrix():
+            print("[INFO]: Thread {0} created".format(threading.current_thread().name))
+            while not self.stop_thread:
+                self.send_pixels()
+                time.sleep(0.001)
+            print("[INFO]: Thread {0} stopped".format(threading.current_thread().name))
+        self.run_async(update_matrix, name="MatrixProtocolAutoBufferThread")
+
+    def stop_auto_buffer(self):
+        return self.stop_async()
 
 if __name__ == "__main__":
     import time

@@ -30,9 +30,10 @@ import threading
 from matrix_protocol import MatrixProtocol
 from ui.image_tab import ImageTab
 from animations import Animations
+from music import MusicAnalyzer
 
 # Define the global variables
-VERSION = 0.2
+VERSION = 0.3
 
 WIDTH=16
 HEIGHT=16
@@ -418,6 +419,66 @@ class AnimationTab(TabbedPanelItem):
             Anims.start()
 
 
+class MusicTab(TabbedPanelItem):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.text = 'Music'
+        self.layout = GridLayout(cols=4)
+        self.layout.padding = 10
+        self.layout.spacing = 10
+        self.music_analyzer = MusicAnalyzer(matrix=Matrix, visu_mode="timeline")
+
+        self.open_button = Button(text='Open Stream', size_hint_x=0.5)
+        self.open_button.bind(on_press=self.open_stream)
+        self.close_button = Button(text='Close Stream', size_hint_x=0.5)
+        self.close_button.bind(on_press=self.close_stream)
+        self.layout.add_widget(self.open_button)
+        self.layout.add_widget(self.close_button)
+
+        self.start_button = Button(text='Start', size_hint_x=0.5)
+        self.start_button.bind(on_press=self.start)
+        self.stop_button = Button(text='Stop', size_hint_x=0.5)
+        self.stop_button.bind(on_press=self.stop)
+        self.layout.add_widget(self.start_button)
+        self.layout.add_widget(self.stop_button)
+
+        visu_mode_label = Label(text='Visualization Mode:', size_hint_x=0.5)
+        self.layout.add_widget(visu_mode_label)
+        timeline_button = ToggleButton(text='Timeline', group='visu_mode', size_hint_x=0.5)
+        timeline_button.bind(on_press=self.set_visu_mode)
+        self.layout.add_widget(timeline_button)
+        timeline_dual_button = ToggleButton(text='Timeline Dual', group='visu_mode', size_hint_x=0.5)
+        timeline_dual_button.bind(on_press=self.set_visu_mode)
+        self.layout.add_widget(timeline_dual_button)
+        spectrum_button = ToggleButton(text='Spectrum', group='visu_mode', size_hint_x=0.5)
+        spectrum_button.bind(on_press=self.set_visu_mode)
+        self.layout.add_widget(spectrum_button)
+
+
+        self.add_widget(self.layout)
+
+    def open_stream(self, instance):
+        self.music_analyzer.open_stream()
+        # check if stream is open
+        if self.music_analyzer.stream.is_active():
+            print("Stream is open")
+    
+    def close_stream(self, instance):
+        self.music_analyzer.close_stream()
+
+    def start(self, instance):
+        self.music_analyzer.start()
+    
+    def stop(self, instance):
+        self.music_analyzer.stop()
+
+    def set_visu_mode(self, instance):
+        visu_mode = instance.text.lower()
+        visu_mode = visu_mode.replace(' ', '_')
+        self.music_analyzer.visu_mode = visu_mode
+        print("Visualization mode set to", visu_mode)
+    
+
 
 
 class DebugTab(TabbedPanelItem):
@@ -608,6 +669,10 @@ class FrackMatrixApp(App):
         # Add a new tab named "Animation"
         animation_tab = AnimationTab()
         tab_panel.add_widget(animation_tab)
+
+        # Add a new tab named "Music"
+        music_tab = MusicTab()
+        tab_panel.add_widget(music_tab)
 
         # Add a new tab named "Text"
         text_tab = TextTab()

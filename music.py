@@ -7,8 +7,6 @@ import threading
 import numpy as np
 import pyaudio
 
-from scipy.signal import butter, lfilter, freqz
-
 def hue_to_rgb(color):
     r, g, b = 0, 0, 0
     if 0 <= color < 60:

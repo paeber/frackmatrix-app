@@ -9,12 +9,13 @@ class Animations:
         self.matrix = matrix
         self.func = self.sine_wave
         self.stop_thread = False
-        self.delay = 0.01
+        self.delay = 0.02
         self.thread = None
         self.options = [self.sine_wave, self.sawtooth_wave, self.square_wave, self.random_pixels, self.raindrops, self.clock, self.rainbow]
         self.freq = 1
         self.A = 0.9
         self.dc = 0.5
+        self.color = (0, 255, 0)
 
     def thread_func(self):
         print("Starting Animation Thread")
@@ -52,8 +53,8 @@ class Animations:
             t += dt
             if prev_y is not None and abs(y - prev_y) > 1:
                 for i in range(min(y, prev_y), max(y, prev_y)):
-                    self.matrix.set_pixel_buffer(x, i, 0, 255, 0)
-            self.matrix.set_pixel_buffer(x, y, 0, 255, 0)
+                    self.matrix.set_pixel_buffer(x, i, self.color[0], self.color[1], self.color[2])
+            self.matrix.set_pixel_buffer(x, y, self.color[0], self.color[1], self.color[2])
             prev_y = y
         self.matrix.send_pixels()
 
@@ -70,11 +71,11 @@ class Animations:
         prev_y = None
         for x in range(0, width):
             y = int((x + t) * f * A) % height
-            self.matrix.set_pixel_buffer(x, y, 0, 255, 0)
+            self.matrix.set_pixel_buffer(x, y, self.color[0], self.color[1], self.color[2])
             
             if prev_y is not None and abs(y - prev_y) > 1:
                 for i in range(min(y, prev_y), max(y, prev_y)):
-                    self.matrix.set_pixel_buffer(x, i, 0, 255, 0)
+                    self.matrix.set_pixel_buffer(x, i, self.color[0], self.color[1], self.color[2])
             prev_y = y
 
         self.matrix.send_pixels()
@@ -91,11 +92,11 @@ class Animations:
         # display square wave in 2d matrix
         prev_y = None
         for x in range(0, width):
-            y = int(A * (self.matrix.height - 1) if int((x + t) * f) % int(1/dc) == 0 else 0)
+            y = int(A * (self.matrix.height - 1) if int((x + t) * f) / int(1/dc) == 0 else 0)
             if prev_y is not None and abs(y - prev_y) > 1:
                 for i in range(min(y, prev_y), max(y, prev_y)):
-                    self.matrix.set_pixel_buffer(x, i, 0, 255, 0)
-            self.matrix.set_pixel_buffer(x, y, 0, 255, 0)
+                    self.matrix.set_pixel_buffer(x, i, self.color[0], self.color[1], self.color[2])
+            self.matrix.set_pixel_buffer(x, y, self.color[0], self.color[1], self.color[2])
             prev_y = y
         self.matrix.send_pixels()
 
@@ -119,7 +120,11 @@ class Animations:
         for i in range(n):
             x = int(width * random.random())
             y = int(height * random.random())
-            self.matrix.set_pixel_buffer(x, y, 0, 0, 255)
+            self.matrix.set_pixel_buffer(x, y, self.color[0], self.color[1], self.color[2])
+            # turn off a random pixel
+            x = int(width * random.random())
+            y = int(height * random.random())
+            self.matrix.set_pixel_buffer(x, y, 0, 0, 0)
         self.matrix.send_pixels()
 
     def clock(self, **kwargs):
@@ -171,8 +176,8 @@ if __name__ == '__main__':
             time.sleep(wait)
 
 
-    matrix = MatrixProtocol(port="/dev/cu.usbserial-110")
-    #matrix.port = "COM12"
+    matrix = MatrixProtocol()
+    matrix.port = "COM27"
     matrix.connect()
 
     import threading
@@ -186,7 +191,7 @@ if __name__ == '__main__':
 
         #thread = threading.Thread(target=play_animation, args=(matrix, animations), name="MatrixProtocolThread")
         #thread.start()
-        animations.func = animations.rainbow
+        animations.func = animations.sine_wave
 
         animations.start()
 

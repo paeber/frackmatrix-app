@@ -29,23 +29,21 @@ class ImageTab(TabbedPanelItem):
     def load_image(self, instance):
         # open file dialog to select image
         from kivy.uix.filechooser import FileChooserIconView
-        self.file_chooser = FileChooserIconView()
+        file_chooser = FileChooserIconView()
         if sys.platform == 'linux':
-            self.file_chooser.path = "/home/pi/Pictures"
+            file_chooser.path = "/home/pi/Pictures"
         else:
-            self.file_chooser.path = "images"
+            file_chooser.path = "images"
 
-        self.file_chooser.bind(on_submit=self.load_image_file)
-        self.file_chooser.bind(on_cancel=self.cancel_image_file)
-        self.file_popup = Popup(title='Select Image', content=self.file_chooser, size_hint=(0.8, 0.8))
+        file_chooser.bind(on_submit=self.load_image_file)
+        file_chooser.bind(on_cancel=self.cancel_image_file)
+        self.file_popup = Popup(title='Select Image', content=file_chooser, size_hint=(0.8, 0.8))
         self.file_popup.open()
 
     def load_image_file(self, instance, value, *args, **kwargs):
         print("Loading image:", value[0])
-
         if self.file_popup:
             self.file_popup.dismiss()
-        
         app = App.get_running_app()
         matrix = app.matrix
         matrix.load_image(value[0])

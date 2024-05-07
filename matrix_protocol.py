@@ -16,8 +16,8 @@ class MatrixProtocol:
         self.height = height
         self.pixels = [[(0, 0, 0) for x in range(self.width)] for y in range(self.height)]
         self.textRenderer = TextRenderer(width, height)
-        self.snake = True
-        self.mirror = True
+        self.snake = False
+        self.mirror = False
         self.thread = None
         self.stop_thread = False
 
@@ -82,14 +82,17 @@ class MatrixProtocol:
         self.clear_pixels_buffer()
         self.send_pixels()
     
-    def set_pixel_cmd(self, x, y, r, g, b):
+    def set_pixel_cmd(self, x, y, r, g, b, snake=False):
         if self.ser is None:
             print("Serial port not connected")
             return False
         if not (0 <= x < self.width and 0 <= y < self.height):
             print("Invalid x, y coordinates")
             return False
-        index = self.xy_to_snake(x, y, self.width)
+        if snake:
+            index = self.xy_to_snake(x, y, self.width)
+        else:
+            index = y * self.width + x
         data = bytes([0, index, r, g, b])
         self.ser.write(data)
         ret = self.ser.read(1)
@@ -105,7 +108,7 @@ class MatrixProtocol:
         else:
             self.pixels[y][x] = (r, g, b)
 
-    def send_pixels(self, snake=True, priority=False):
+    def send_pixels(self, snake=False, priority=False):
         if self.ser is None:
             print("Serial port not connected")
             return False

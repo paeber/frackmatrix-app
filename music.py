@@ -37,7 +37,7 @@ class MusicAnalyzer:
         self.visu_mode = visu_mode
         self.p = pyaudio.PyAudio()
         self.stream = None
-        self.frames = 2048
+        self.frames = 1024
         self.rate = 48000
         self.max_peak = 1023
         self.sensitivity = 340

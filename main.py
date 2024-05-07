@@ -325,9 +325,12 @@ class AnimationTab(TabbedPanelItem):
         status_label = Label(text='Status:')
         self.status_label = Label(text='Stopped', size_hint_x=0.4)
         stop_button = Button(text='Stop', size_hint_x=0.3, on_press=self.stop_animation)
+        color_spinner = Spinner(text='White', values=('White', 'Red', 'Green', 'Blue'))
+        color_spinner.bind(text=self.set_animation_color)
         status_box.add_widget(status_label)
         status_box.add_widget(self.status_label)
         status_box.add_widget(stop_button)
+        status_box.add_widget(color_spinner)
         self.layout.add_widget(status_box)
 
         # Radio buttons for selecting the animation
@@ -346,7 +349,7 @@ class AnimationTab(TabbedPanelItem):
         # Parameters for the animation
         param_box = GridLayout(cols=3, size_hint_y=0.4)
         param_box.add_widget(Label(text='Frequency'))
-        self.freq_slider = Slider(min=1, max=100, value=4, step=1, on_touch_move=self.set_params)
+        self.freq_slider = Slider(min=0.1, max=10, value=4, step=0.1, on_touch_move=self.set_params)
         self.freq_value = Label(text=str(self.freq_slider.value))
         param_box.add_widget(self.freq_slider)
         param_box.add_widget(self.freq_value)
@@ -371,14 +374,12 @@ class AnimationTab(TabbedPanelItem):
         app_box = BoxLayout(orientation='horizontal', size_hint_y=0.1)
         app_label = Label(text='Special')
         clock_button = ToggleButton(text='Clock', group='animation', on_press=self.set_new_animation)
-        music_button = ToggleButton(text='Music', group='animation', on_press=self.set_new_animation)
         rainbow_button = ToggleButton(text='Rainbow', group='animation', on_press=self.set_new_animation)
         fire_button = ToggleButton(text='Fire', group='animation', on_press=self.set_new_animation)
         raindrops_button = ToggleButton(text='Raindrops', group='animation', on_press=self.set_new_animation)
         
         app_box.add_widget(app_label)
         app_box.add_widget(clock_button)
-        app_box.add_widget(music_button)
         app_box.add_widget(rainbow_button)
         app_box.add_widget(fire_button)
         app_box.add_widget(raindrops_button)
@@ -394,9 +395,20 @@ class AnimationTab(TabbedPanelItem):
         Anims.freq = self.freq_slider.value
         Anims.A = self.amp_slider.value
         Anims.dc = self.dc_slider.value
-        self.freq_value.text = str(self.freq_slider.value)
-        self.amp_value.text = str(self.amp_slider.value)
-        self.dc_value.text = str(self.dc_slider.value)
+        self.freq_value.text = str(round(self.freq_slider.value, 2))
+        self.amp_value.text = str(round(self.amp_slider.value, 2))
+        self.dc_value.text = str(round(self.dc_slider.value, 2))
+
+    def set_animation_color(self, instance, value):
+        color = instance.text
+        if color == 'White':
+            Anims.color = (255, 255, 255)
+        elif color == 'Red':
+            Anims.color = (255, 0, 0)
+        elif color == 'Green':
+            Anims.color = (0, 255, 0)
+        elif color == 'Blue':
+            Anims.color = (0, 0, 255)   
 
     def set_new_animation(self, instance):
         Anims.stop()

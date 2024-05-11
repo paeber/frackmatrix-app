@@ -52,12 +52,14 @@ void setup() {
   Serial.begin(1000000);
 
   /*
-  for (int i = 0; i < NUM_LEDS; i++)
+  for (int i = 0; i < NUM_LEDS_2; i++)
   {
-    leds[i] = CRGB::Red;
+    leds_upper[i] = CRGB::Red;
+    leds_lower[i] = CRGB::Red;
     FastLED.show();
     delay(20);
-  }
+  }*/
+  /*
   for (int i = 0; i < NUM_LEDS; i++)
   {
     leds[i] = CRGB::Green;
@@ -113,14 +115,13 @@ void serialEvent() {
     case 2:
       //frame in mode
       Serial.readBytes((char*)frameIn, NUM_LEDS * 3);
-      for(int i = 0; i < NUM_LEDS; i++){
+      for(int i = 0; i < NUM_LEDS_2; i++){  
+        int i2 = 500 + i;
         int snake_index = xy_to_snake(i % width, i / width, width);
+        int snake_index_2 = xy_to_snake(i2 % width, i2 / width, width) -500 ;
         //leds[snake_index] = CRGB((byte)frameIn[i * 3], (byte)frameIn[i * 3 + 1], (byte)frameIn[i * 3 + 2]);
-        if(snake_index < 500){
-          leds_upper[snake_index % 500] = CRGB((byte)frameIn[i * 3], (byte)frameIn[i * 3 + 1], (byte)frameIn[i * 3 + 2]);
-        } else {
-          leds_lower[snake_index % 500] = CRGB((byte)frameIn[i * 3], (byte)frameIn[i * 3 + 1], (byte)frameIn[i * 3 + 2]);
-        }
+        leds_upper[snake_index] = CRGB((byte)frameIn[i * 3], (byte)frameIn[i * 3 + 1], (byte)frameIn[i * 3 + 2]);
+        leds_lower[snake_index_2] = CRGB((byte)frameIn[i2 * 3], (byte)frameIn[i2 * 3 + 1], (byte)frameIn[i2 * 3 + 2]);
       }
       FastLED.show();
       break;

@@ -35,8 +35,8 @@ from music import MusicAnalyzer
 # Define the global variables
 VERSION = 0.3
 
-WIDTH=16
-HEIGHT=16
+WIDTH=50
+HEIGHT=20
 ASPECT_RATIO=WIDTH/HEIGHT
 TOP_KEEPOUT=80
 BOTTOM_KEEPOUT=0

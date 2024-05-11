@@ -2,13 +2,17 @@
 
 //You must include a reference to the FastLED library to use this code. http://fastled.io/
 
+#define BRIGHTNESS 255
+
 // Matrix Configuration
-const int width = 16; 
-const int height = 16;
-const int DATA_PIN = 6;
+const int width = 50; 
+const int height = 20;
+const int DATA_PIN_UPPER = 6;
+const int DATA_PIN_LOWER = 5;
 
 
 const int NUM_LEDS = width * height;
+const int NUM_LEDS_2 = width * height / 2;
 int drawIndex = 0;
 int x;
 int y;
@@ -18,7 +22,9 @@ char frameIn[NUM_LEDS * 3];
 
 
 // Define the array of leds
-CRGB leds[NUM_LEDS];
+//CRGB leds[NUM_LEDS];
+CRGB leds_upper[NUM_LEDS_2];
+CRGB leds_lower[NUM_LEDS_2];
 
 int xy_to_snake(int x, int y, int width) {
     if (y % 2 == 1) {
@@ -30,15 +36,42 @@ int xy_to_snake(int x, int y, int width) {
 
 void setup() {
 
-  FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
+  //FastLED.addLeds<WS2812B, DATA_PIN_UPPER, RGB>(leds, NUM_LEDS);
+  FastLED.addLeds<WS2812B, DATA_PIN_UPPER, RGB>(leds_upper, NUM_LEDS_2);
+  FastLED.addLeds<WS2812B, DATA_PIN_LOWER, RGB>(leds_lower, NUM_LEDS_2);
+  FastLED.setBrightness(BRIGHTNESS);
 
-  for (int i = 0; i < NUM_LEDS; i++)
+  for (int i = 0; i < NUM_LEDS_2; i++)
   {
-    leds[i] = CRGB::Black;
+    //leds[i] = CRGB::Black;
+    leds_upper[i] = CRGB::Black;
+    leds_lower[i] = CRGB::Black;
   }
   FastLED.show();
 
   Serial.begin(1000000);
+
+  /*
+  for (int i = 0; i < NUM_LEDS; i++)
+  {
+    leds[i] = CRGB::Red;
+    FastLED.show();
+    delay(20);
+  }
+  for (int i = 0; i < NUM_LEDS; i++)
+  {
+    leds[i] = CRGB::Green;
+    FastLED.show();
+    delay(20);
+  }
+  for (int i = 0; i < NUM_LEDS; i++)
+  {
+    leds[i] = CRGB::White;
+    FastLED.show();
+    delay(20);
+  }
+  */
+  
 
 }
 
@@ -56,15 +89,22 @@ void serialEvent() {
       drawIndex = (int)(y * width) + x;
       drawIndex = xy_to_snake(x, y, width);
 
-      leds[drawIndex] = CRGB((byte)drawIn[2], (byte)drawIn[3], (byte)drawIn[4]);
+      //leds[drawIndex] = CRGB((byte)drawIn[2], (byte)drawIn[3], (byte)drawIn[4]);
+      if(drawIndex < 500){
+        leds_upper[drawIndex % 500] = CRGB((byte)drawIn[2], (byte)drawIn[3], (byte)drawIn[4]);
+      } else {
+        leds_lower[drawIndex % 500] = CRGB((byte)drawIn[2], (byte)drawIn[3], (byte)drawIn[4]);
+      }
       FastLED.show();
       break;
 
     case 1:
       //clear mode
-      for (int i = 0; i < NUM_LEDS; i++)
+      for (int i = 0; i < NUM_LEDS_2; i++)
       {
-        leds[i] = CRGB::Black;
+        //leds[i] = CRGB::Black;
+        leds_upper[i] = CRGB::Black;
+        leds_lower[i] = CRGB::Black;
       }
 
       FastLED.show();
@@ -75,7 +115,12 @@ void serialEvent() {
       Serial.readBytes((char*)frameIn, NUM_LEDS * 3);
       for(int i = 0; i < NUM_LEDS; i++){
         int snake_index = xy_to_snake(i % width, i / width, width);
-        leds[snake_index] = CRGB((byte)frameIn[i * 3], (byte)frameIn[i * 3 + 1], (byte)frameIn[i * 3 + 2]);
+        //leds[snake_index] = CRGB((byte)frameIn[i * 3], (byte)frameIn[i * 3 + 1], (byte)frameIn[i * 3 + 2]);
+        if(snake_index < 500){
+          leds_upper[snake_index % 500] = CRGB((byte)frameIn[i * 3], (byte)frameIn[i * 3 + 1], (byte)frameIn[i * 3 + 2]);
+        } else {
+          leds_lower[snake_index % 500] = CRGB((byte)frameIn[i * 3], (byte)frameIn[i * 3 + 1], (byte)frameIn[i * 3 + 2]);
+        }
       }
       FastLED.show();
       break;

@@ -132,11 +132,12 @@ class Animations:
         current_time = datetime.now()
         hour = current_time.hour
         minute = current_time.minute
-        time_str = f"{hour:02d}:{minute:02d}"
+        second = current_time.second
+        time_str = f"{hour:02d}:{minute:02d}:{second:02d}"
 
         self.matrix.clear_pixels_buffer()
-        self.matrix.textRenderer.add_text(time_str.split(":")[0], line=0)
-        self.matrix.textRenderer.add_text(time_str.split(":")[1], line=1)
+        self.matrix.textRenderer.add_text(time_str, line=0, foreground=self.color)
+        self.matrix.textRenderer.add_text("FRACKWOCHE", line=1, foreground=self.color)
         self.matrix.pixels = self.matrix.textRenderer.get_buffer()
         self.matrix.send_pixels()
 

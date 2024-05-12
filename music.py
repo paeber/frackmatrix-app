@@ -132,17 +132,20 @@ class MusicAnalyzer:
                     else:
                         frame[inv_y][self.matrix.width - 1] = (0, 0, 0)
 
-            else:
+            elif self.visu_mode == "circle":
                 # draw circle on matrix based on volume
                 x = self.matrix.width // 2
                 y = self.matrix.height // 2
-                r = int(peak * (self.matrix.height // self.sensitivity) / 2)
+                r = int((peak * self.matrix.height // self.sensitivity) / 2)
                 for i in range(360):
                     angle = math.radians(i)
                     x1 = int(x + r * math.cos(angle))
                     y1 = int(y + r * math.sin(angle))
                     if 0 <= x1 < self.matrix.width and 0 <= y1 < self.matrix.height:
-                        frame[y1][x1] = (255, 0, 0)        
+                        frame[y1][x1] = color      
+
+            else:
+                pass
 
             self.matrix.pixels = frame.copy()
 

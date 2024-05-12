@@ -14,6 +14,7 @@ class TextRenderer:
         self.char_height = 7
         self.slot_width = self.char_width + 1
         self.slot_height = self.char_height + 1
+        self.slot_height = self.char_height // 2
         self.no_of_lines = self.width // (self.slot_width)
         self.no_of_columns = self.height // (self.slot_height)
 
@@ -69,8 +70,8 @@ if __name__ == "__main__":
     import time
 
     def plot_scroll_text(text, textRenderer, line=0):
-        disp_width = 32
-        disp_height = 16
+        disp_width = 50
+        disp_height = 20
 
         disp_buffer = [[(0, 0, 0) for x in range(disp_width)] for y in range(disp_height)]
         text_buffer = textRenderer.render_buffer(text)
@@ -92,7 +93,7 @@ if __name__ == "__main__":
 
 
 
-    textRenderer = TextRenderer(16, 16)
+    textRenderer = TextRenderer(50, 20)
 
     textRenderer.add_text("17", line=0, slot=0)
     textRenderer.add_text("EBER", line=1, slot=0)
@@ -106,4 +107,4 @@ if __name__ == "__main__":
     for row in buf:
         print("".join(["#" if pixel != (0, 0, 0) else "." for pixel in row]))
 
-    plot_scroll_text("ELEKTROTECHNIK", textRenderer, line=1)
+    #plot_scroll_text("ELEKTROTECHNIK", textRenderer, line=1)

@@ -462,9 +462,9 @@ class MusicTab(TabbedPanelItem):
         timeline_dual_button = ToggleButton(text='Timeline Dual', group='visu_mode', size_hint_x=0.5)
         timeline_dual_button.bind(on_press=self.set_visu_mode)
         self.layout.add_widget(timeline_dual_button)
-        spectrum_button = ToggleButton(text='Spectrum', group='visu_mode', size_hint_x=0.5)
-        spectrum_button.bind(on_press=self.set_visu_mode)
-        self.layout.add_widget(spectrum_button)
+        circle_button = ToggleButton(text='Circle', group='visu_mode', size_hint_x=0.5)
+        circle_button.bind(on_press=self.set_visu_mode)
+        self.layout.add_widget(circle_button)
 
 
         self.add_widget(self.layout)

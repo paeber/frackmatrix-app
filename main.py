@@ -325,7 +325,7 @@ class AnimationTab(TabbedPanelItem):
         status_label = Label(text='Status:')
         self.status_label = Label(text='Stopped', size_hint_x=0.4)
         stop_button = Button(text='Stop', size_hint_x=0.3, on_press=self.stop_animation)
-        color_spinner = Spinner(text='White', values=('White', 'Red', 'Green', 'Blue'))
+        color_spinner = Spinner(text='White', values=('White', 'Red', 'Green', 'Blue', 'Purple', 'Orange', 'Yellow'))
         color_spinner.bind(text=self.set_animation_color)
         status_box.add_widget(status_label)
         status_box.add_widget(self.status_label)
@@ -409,6 +409,12 @@ class AnimationTab(TabbedPanelItem):
             Anims.color = (0, 255, 0)
         elif color == 'Blue':
             Anims.color = (0, 0, 255)   
+        elif color == 'Purple':
+            Anims.color = (255, 0, 255)
+        elif color == 'Orange':
+            Anims.color = (255, 165, 0)
+        elif color == 'Yellow':
+            Anims.color = (255, 255, 0)
 
     def set_new_animation(self, instance):
         Anims.stop()

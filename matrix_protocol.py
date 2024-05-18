@@ -18,6 +18,7 @@ class MatrixProtocol:
         self.textRenderer = TextRenderer(width, height)
         self.snake = False
         self.mirror = False
+        self.rotation = 180
         self.thread = None
         self.stop_thread = False
 
@@ -126,6 +127,13 @@ class MatrixProtocol:
                     send_buf[y][x] = self.pixels[y][self.width - (x + 1)]
                 else:
                     send_buf[y][x] = self.pixels[y][x]
+
+        if self.rotation == 180:
+            send_buf = np.rot90(send_buf, 2)
+        elif self.rotation == 90:
+            send_buf = np.rot90(send_buf, 3)
+        elif self.rotation == 270:
+            send_buf = np.rot90(send_buf, 1)
                         
         if snake:
             for idx in range(self.width * self.height):

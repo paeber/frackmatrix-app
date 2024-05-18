@@ -42,7 +42,7 @@ TOP_KEEPOUT=80
 BOTTOM_KEEPOUT=0
 
 restart = False
-alwayson = True
+alwayson = False
 
 # Print welcome message
 print("Frack Matrix v{0}".format(VERSION))

@@ -10,11 +10,11 @@ class TextRenderer:
         self.width = width
         self.height = height
         self.pixels = [[(0, 0, 0) for x in range(self.width)] for y in range(self.height)]
+        self.height_offset = 2
         self.char_width = 5
         self.char_height = 7
         self.slot_width = self.char_width + 1
-        self.slot_height = self.char_height + 1
-        self.slot_height = self.char_height // 2
+        self.slot_height = self.char_height + 2
         self.no_of_lines = self.width // (self.slot_width)
         self.no_of_columns = self.height // (self.slot_height)
 
@@ -31,7 +31,7 @@ class TextRenderer:
         text = text.upper()
         if scale:
             line = slot = 0
-        y = (line) * (self.slot_height)
+        y = (line) * (self.slot_height) + self.height_offset
         x = (slot) * (self.slot_width)
         for char in text:
             if char in LUT_5x7.Characters:

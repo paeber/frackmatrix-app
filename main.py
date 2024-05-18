@@ -42,7 +42,7 @@ TOP_KEEPOUT=80
 BOTTOM_KEEPOUT=0
 
 restart = False
-alwayson = False
+alwayson = True
 
 # Print welcome message
 print("Frack Matrix v{0}".format(VERSION))
@@ -536,7 +536,7 @@ class DebugTab(TabbedPanelItem):
 
     def stop(self, instance):
         global restart, alwayson
-        allways_on = False
+        alwayson = False
         restart = False
         App.get_running_app().stop()
 

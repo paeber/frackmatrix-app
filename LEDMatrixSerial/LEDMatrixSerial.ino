@@ -7,6 +7,8 @@
 // Matrix Configuration
 const int width = 50; 
 const int height = 20;
+const int panel_width = 50;
+const int panel_height = 10;
 const int DATA_PIN_UPPER = 6;
 const int DATA_PIN_LOWER = 5;
 
@@ -26,12 +28,24 @@ char frameIn[NUM_LEDS * 3];
 CRGB leds_upper[NUM_LEDS_2];
 CRGB leds_lower[NUM_LEDS_2];
 
-int xy_to_snake(int x, int y, int width) {
+int xy_to_snake_topright(int x, int y, int width) {
     if (y % 2 == 1) {
         return y * width + x;
     } else {
         return y * width + (width - x - 1);
     }
+}
+
+int xy_to_snake(int x, int y, int width) {
+    // Flip the y coordinate
+    y = height - 1 - y;
+
+    // Flip the x coordinate on every other row
+    if (y % 2 == 1) {
+        x = width - 1 - x;
+    }
+
+    return y * width + x;
 }
 
 void setup() {
@@ -51,8 +65,8 @@ void setup() {
 
   Serial.begin(1000000);
 
-  /*
-  for (int i = 0; i < NUM_LEDS_2; i++)
+  
+  /*for (int i = 0; i < NUM_LEDS_2; i++)
   {
     leds_upper[i] = CRGB::Red;
     leds_lower[i] = CRGB::Red;

@@ -442,24 +442,33 @@ class MusicTab(TabbedPanelItem):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.text = 'Music'
-        self.layout = GridLayout(cols=4)
+        self.layout = BoxLayout(orientation='vertical')
         self.layout.padding = 10
         self.layout.spacing = 10
         self.music_analyzer = MusicAnalyzer(matrix=Matrix, visu_mode="timeline")
 
-        self.open_button = Button(text='Open Stream', size_hint_x=0.5)
-        self.open_button.bind(on_press=self.open_stream)
-        self.close_button = Button(text='Close Stream', size_hint_x=0.5)
-        self.close_button.bind(on_press=self.close_stream)
-        self.layout.add_widget(self.open_button)
-        self.layout.add_widget(self.close_button)
+        info_box = BoxLayout(orientation='horizontal')
+        info_label = Label(text='Info:', size_hint_x=0.2)
+        self.info_label = Label(text='Stopped', size_hint_x=0.8)
+        info_box.add_widget(info_label)
+        info_box.add_widget(self.info_label)
+        
+
+        # self.open_button = Button(text='Open Stream', size_hint_x=0.5)
+        # self.open_button.bind(on_press=self.open_stream)
+        # self.close_button = Button(text='Close Stream', size_hint_x=0.5)
+        # self.close_button.bind(on_press=self.close_stream)
+        # self.layout.add_widget(self.open_button)
+        # self.layout.add_widget(self.close_button)
 
         self.start_button = Button(text='Start', size_hint_x=0.5)
         self.start_button.bind(on_press=self.start)
         self.stop_button = Button(text='Stop', size_hint_x=0.5)
         self.stop_button.bind(on_press=self.stop)
-        self.layout.add_widget(self.start_button)
-        self.layout.add_widget(self.stop_button)
+        info_box.add_widget(self.start_button)
+        info_box.add_widget(self.stop_button)
+
+        self.layout.add_widget(info_box)
 
         visu_mode_label = Label(text='Visualization Mode:', size_hint_x=0.5)
         self.layout.add_widget(visu_mode_label)
@@ -487,9 +496,11 @@ class MusicTab(TabbedPanelItem):
 
     def start(self, instance):
         self.music_analyzer.start()
+        self.info_label.text = 'Running'
     
     def stop(self, instance):
         self.music_analyzer.stop()
+        self.info_label.text = 'Stopped'
 
     def set_visu_mode(self, instance):
         visu_mode = instance.text.lower()

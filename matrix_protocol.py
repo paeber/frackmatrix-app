@@ -151,19 +151,33 @@ class MatrixProtocol:
         self.ser.write(data)
         ret = self.ser.read(1)
         return (ret == b'\x10')
-    
 
-    def load_image(self, image_path):
+    def load_image(self, image_path, stretch=False):  
         img = Image.open(image_path)
-        img = img.resize((self.width, self.height))
-        pixels = img.load()
-        for y in range(self.height):
-            for x in range(self.width):
-                if len(pixels[x, y]) == 3:
-                    r, g, b = pixels[x, y]
-                elif len(pixels[x, y]) == 4:
-                    r, g, b, a= pixels[x, y]
-                self.set_pixel_buffer(x, y, r, g, b)
+        if stretch:
+            img = img.resize((self.width, self.height))
+            x_offset = 0
+            y_offset = 0
+        else:
+            # check which dimension is larger and scale it to the matrix size
+            if img.width > img.height:
+                img = img.resize((self.width, self.height * img.height // img.width))
+            else:
+                img = img.resize((self.width * img.width // img.height, self.height))
+            # center the image on the matrix
+            x_offset = (self.width - img.width) // 2
+            y_offset = (self.height - img.height) // 2
+        try:
+            pixels = img.load()
+            for y in range(self.height):
+                for x in range(self.width):
+                    if len(pixels[x, y]) == 3:
+                        r, g, b = pixels[x, y]
+                    elif len(pixels[x, y]) == 4:
+                        r, g, b, a= pixels[x, y]
+                    self.set_pixel_buffer(x + x_offset, y + y_offset, r, g, b)
+        except Exception as e:
+            print("Error loading image:", e)
 
     def scroll_text(self, text="HELLO", line=0, foreground=(255, 255, 255), background=(0, 0, 0), blank=True, fill=False, **kwargs):
         if blank:

@@ -49,7 +49,7 @@ print("Frack Matrix v{0}".format(VERSION))
 print(sys.platform)
 
 # Check if the application is running on a Raspberry Pi
-if sys.platform == 'linux':
+if 'linux' in sys.platform:
     Window.cursor = False
     Window.size = (800, 480)
     alwayson = True
@@ -453,7 +453,6 @@ class MusicTab(TabbedPanelItem):
         info_box.add_widget(info_label)
         info_box.add_widget(self.info_label)
         
-
         # self.open_button = Button(text='Open Stream', size_hint_x=0.5)
         # self.open_button.bind(on_press=self.open_stream)
         # self.close_button = Button(text='Close Stream', size_hint_x=0.5)
@@ -481,7 +480,6 @@ class MusicTab(TabbedPanelItem):
         circle_button = ToggleButton(text='Circle', group='visu_mode', size_hint_x=0.5)
         circle_button.bind(on_press=self.set_visu_mode)
         self.layout.add_widget(circle_button)
-
 
         self.add_widget(self.layout)
 

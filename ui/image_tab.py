@@ -4,6 +4,7 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.popup import Popup
+from kivy.uix.label import Label
 from kivy.app import App
 
 import sys
@@ -20,6 +21,10 @@ class ImageTab(TabbedPanelItem):
         self.image_box.padding = 10
         self.image_box.spacing = 10
 
+        description = "Double click on the image in the file browser to display it on the matrix."
+        self.image_description = Label(text=description, font_size=16, halign='center', valign='middle')
+        self.image_box.add_widget(self.image_description)
+
         self.image_button = Button(text='Load Image', size_hint_y=None, height=70, on_press=self.load_image)
         self.image_box.add_widget(self.image_button)
 
@@ -30,7 +35,7 @@ class ImageTab(TabbedPanelItem):
         # open file dialog to select image
         from kivy.uix.filechooser import FileChooserIconView
         file_chooser = FileChooserIconView()
-        if sys.platform == 'linux':
+        if 'linux' in sys.platform:
             file_chooser.path = "/home/pi/Pictures"
         else:
             file_chooser.path = "images"

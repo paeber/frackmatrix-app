@@ -19,6 +19,7 @@ class MatrixProtocol:
         self.snake = False
         self.mirror = False
         self.rotation = 180
+        self.simulation = False
         self.thread = None
         self.stop_thread = False
 
@@ -110,7 +111,7 @@ class MatrixProtocol:
             self.pixels[y][x] = (r, g, b)
 
     def send_pixels(self, snake=False, priority=False):
-        if self.ser is None:
+        if self.ser is None and not self.simulation:
             print("Serial port not connected")
             return False
         if threading.current_thread().name == 'MainThread':
@@ -128,12 +129,22 @@ class MatrixProtocol:
                 else:
                     send_buf[y][x] = self.pixels[y][x]
 
-        if self.rotation == 180:
+        if self.simulation:
+            # pretty print the matrix to console for simulation 
+            for y in range(self.height):
+                for x in range(self.width):
+                    r, g, b = send_buf[y][x]
+                    if r == 0 and g == 0 and b == 0:
+                        print("  ", end="")
+                    else:
+                        print("# ", end="")
+                print()
+            return True
+
+        if self.rotation == 0:
+            pass
+        elif self.rotation == 180:
             send_buf = np.rot90(send_buf, 2)
-        elif self.rotation == 90:
-            send_buf = np.rot90(send_buf, 3)
-        elif self.rotation == 270:
-            send_buf = np.rot90(send_buf, 1)
                         
         if snake:
             for idx in range(self.width * self.height):
@@ -236,7 +247,7 @@ if __name__ == "__main__":
         
 
     try: 
-        Matrix = MatrixProtocol()
+        Matrix = MatrixProtocol(width=50, height=20)
         #ports = Matrix.scan_serial_ports()
         ports = ["COM27"]
         if(len(ports) < 1):
@@ -244,9 +255,10 @@ if __name__ == "__main__":
             exit()
 
         Matrix.port = ports[0]
-        if not Matrix.connect():
-            print("Failed to connect to port")
-            exit()
+        Matrix.simulation = True
+        #if not Matrix.connect():
+        #    print("Failed to connect to port")
+        #    exit()
         
         Matrix.set_pixel_cmd(10, 10, 255, 0, 0)
         time.sleep(2)

@@ -33,7 +33,7 @@ from animations import Animations
 from music import MusicAnalyzer
 
 # Define the global variables
-VERSION = 0.3
+VERSION = 0.4
 
 WIDTH=50
 HEIGHT=20
@@ -68,6 +68,7 @@ serial_ports = Matrix.scan_serial_ports()
 if len(serial_ports) == 0:
     print("No serial ports found")
     serial_ports = ["/dev/tty/Nönö"]
+    Matrix.simulation = True
 
 
 
@@ -627,6 +628,7 @@ class HomeTab(TabbedPanelItem):
     def connect(self, instance):
         action = instance.text
         if action == "Connect":
+            Matrix.simulation = False
             Matrix.port = self.serial_port_spinner.text
             Matrix.baudrate = int(self.baud_rate_spinner.text)
             Matrix.connect()
@@ -634,6 +636,7 @@ class HomeTab(TabbedPanelItem):
             self.connect_button.background_color = (1, 0, 0, 1)
         elif action == "Disconnect":
             Matrix.disconnect()
+            Matrix.simulation = True
             self.connect_button.text = 'Connect'
             self.connect_button.background_color = [0, 1, 0, 1]
 

@@ -76,7 +76,7 @@ class MusicAnalyzer:
         self.matrix.stop_auto_buffer()
 
     def get_peak(self):
-        data = np.frombuffer(self.stream.read(2048), dtype=np.int16)
+        data = np.frombuffer(self.stream.read(self.frames), dtype=np.int16)
         peak = np.max(np.abs(data))
         peak = int(peak * self.max_peak / 2 ** 16)
 
@@ -133,6 +133,11 @@ class MusicAnalyzer:
                         frame[inv_y][self.matrix.width - 1] = (0, 0, 0)
 
             elif self.visu_mode == "circle":
+                # clear the frame
+                for y in range(self.matrix.height):
+                    for x in range(self.matrix.width):
+                        frame[y][x] = (0, 0, 0) 
+
                 # draw circle on matrix based on volume
                 x = self.matrix.width // 2
                 y = self.matrix.height // 2
@@ -142,7 +147,7 @@ class MusicAnalyzer:
                     x1 = int(x + r * math.cos(angle))
                     y1 = int(y + r * math.sin(angle))
                     if 0 <= x1 < self.matrix.width and 0 <= y1 < self.matrix.height:
-                        frame[y1][x1] = color      
+                        frame[y1][x1] = color 
 
             else:
                 pass
@@ -163,123 +168,27 @@ class MusicAnalyzer:
 
 if __name__ == '__main__':
 
-    matrix = MatrixProtocol()
+    matrix = MatrixProtocol(width=50, height=20)
     matrix.port = "COM12"
     matrix.baudrate = 1000000
-    matrix_connected = False
-    try:
-        if matrix.connect():
+    matrix.simulation = True
 
-            def update_matrix():
-                while True:
-                    matrix.send_pixels()
-                    time.sleep(0.01)
-
-            matrix.run_async(update_matrix)
-            matrix_connected = True
-    except:
-        print("Matrix not connected")
-        matrix.width = 50
-        matrix.height = 20
+    if not matrix.simulation:
+        matrix.connect()
 
 
-    Music = MusicAnalyzer()
+    Music = MusicAnalyzer(matrix)
+    Music.start()
+    Music.visu_mode = "circle"
 
 
-
-    mode = "timeline"
-
-    # Define the number of frequency bins for the spectrogram
-    num_bins = matrix.height
-
-    try: 
-        color = (255, 0, 0)
-        hue = 0
-        frame = [[(0, 0, 0) for x in range(matrix.width)] for y in range(matrix.height)]
-
-        while True:
-            peak = Music.get_peak()
-
-            if mode == "circle":
-                # draw circle on matrix based on volume
-                x = matrix.width // 2
-                y = matrix.height // 2
-                r = int(peak * (matrix.height // Music.sensitivity) / 2)
-                for i in range(360):
-                    angle = math.radians(i)
-                    x1 = int(x + r * math.cos(angle))
-                    y1 = int(y + r * math.sin(angle))
-                    if 0 <= x1 < matrix.width and 0 <= y1 < matrix.height:
-                        frame[y1][x1] = (255, 0, 0)
-
-            elif mode == "timeline":
-                # shift the pixels in the frame to the left
-                for y in range(matrix.height):
-                    for x in range(matrix.width - 1):
-                        frame[y][x] = frame[y][x + 1]
-                
-                # draw the new peak value on the right side of the frame
-                for y in range(matrix.height):
-                    inv_y = matrix.height - 1 - y
-                    if y < peak * matrix.height // Music.sensitivity:
-                        frame[inv_y][matrix.width - 1] = color
-                    else:
-                        frame[inv_y][matrix.width - 1] = (0, 0, 0)
-
-            elif mode == "timeline_dual":
-                # shift the pixels in the frame to the left
-                for y in range(matrix.height):
-                    for x in range(matrix.width - 1):
-                        frame[y][x] = frame[y][x + 1]
-                
-                # draw the new peak value on the right side of the frame
-                for y in range(matrix.height):
-                    inv_y = matrix.height - 1 - y
-                    level = peak * matrix.height // Music.sensitivity
-                    middle = matrix.height // 2
-                    for y in range(level // 2):
-                        frame[middle - y][matrix.width - 1] = color  
-                        frame[middle + y][matrix.width - 1] = color          
-                    else:
-                        frame[inv_y][matrix.width - 1] = (0, 0, 0)        
-
-     
-
-            # increment color loop
-            hue += 1
-            if hue >= 360:
-                hue = 0
-            color = hue_to_rgb(hue)
-
-            time.sleep(0.01)
-            
-
-                    
-                
-
-                
-                
-            
-            matrix.pixels = frame.copy()
-
-            # Pretty print the matrix
-            if matrix_connected == False:
-                for row in frame:
-                    print("".join(["#" if pixel != (0, 0, 0) else " " for pixel in row]))
-                print("\n\n")
-        
-    except KeyboardInterrupt:
-        print("Exiting...")
-        matrix.stop_async()
-
-    finally:
-        Music.stream.close()
-        Music.p.terminate()
-        
-        
-
-
-
-
-
-        
+    while True:
+        try:
+            pass
+        except KeyboardInterrupt:
+            Music.stop()
+            print("Exiting...")
+            break
+        except Exception as e:
+            print(e)
+            break

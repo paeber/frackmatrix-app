@@ -130,15 +130,7 @@ class MatrixProtocol:
                     send_buf[y][x] = self.pixels[y][x]
 
         if self.simulation:
-            # pretty print the matrix to console for simulation 
-            for y in range(self.height):
-                for x in range(self.width):
-                    r, g, b = send_buf[y][x]
-                    if r == 0 and g == 0 and b == 0:
-                        print("  ", end="")
-                    else:
-                        print("# ", end="")
-                print()
+            self.simulation_output(send_buf)
             return True
 
         if self.rotation == 0:
@@ -210,7 +202,7 @@ class MatrixProtocol:
                 return
 
     def run_async(self, task, task_args=(), name="MatrixProtocolThread"):
-        if self.ser is None:
+        if self.ser is None and not self.simulation:
             print("Serial port not connected")
             return False
         if self.thread is not None and self.thread.is_alive():
@@ -239,6 +231,19 @@ class MatrixProtocol:
 
     def stop_auto_buffer(self):
         return self.stop_async()
+    
+    def simulation_output(self, buf):
+        import os
+        os.system('cls' if os.name == 'nt' else 'clear')
+        # pretty print the matrix to console for simulation 
+        for y in range(self.height):
+            for x in range(self.width):
+                r, g, b = buf[y][x]
+                if r == 0 and g == 0 and b == 0:
+                    print("  ", end="")
+                else:
+                    print("X ", end="")
+            print()
 
 if __name__ == "__main__":
     import time

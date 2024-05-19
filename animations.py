@@ -137,7 +137,7 @@ class Animations:
 
         self.matrix.clear_pixels_buffer()
         self.matrix.textRenderer.add_text(time_str, line=0, foreground=self.color)
-        self.matrix.textRenderer.add_text("FRACKWOCHE", line=1, foreground=self.color)
+        self.matrix.textRenderer.add_text("FRACK ET", line=1, foreground=self.color)
         self.matrix.pixels = self.matrix.textRenderer.get_buffer()
         self.matrix.send_pixels()
 

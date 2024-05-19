@@ -181,7 +181,10 @@ class MatrixProtocol:
 
     def scroll_text(self, text="HELLO", line=0, foreground=(255, 255, 255), background=(0, 0, 0), blank=True, fill=False, **kwargs):
         if blank:
-            quotient, remainder = divmod(self.width, self.textRenderer.slot_width)
+            if(fill):
+                quotient, remainder = (4, 1)
+            else:
+                quotient, remainder = divmod(self.width, self.textRenderer.slot_width)
             blanks = quotient + bool(remainder)
             text = "{0}{1}{0}".format(" " * blanks, text)
 
@@ -194,8 +197,9 @@ class MatrixProtocol:
 
         if fill:
             # scale up text buffer to display buffer size
-            text_buffer = np.repeat(text_buffer, disp_height // self.textRenderer.char_height, axis=0)
-            text_buffer = np.repeat(text_buffer, disp_width // self.textRenderer.char_width, axis=1)
+            factor = disp_height // self.textRenderer.char_height
+            text_buffer = np.repeat(text_buffer, factor, axis=0)
+            text_buffer = np.repeat(text_buffer, factor, axis=1)
             
 
         # move text buffer to display buffer from right to left with a step of 1 pixel algin at the top

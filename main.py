@@ -200,23 +200,32 @@ class TextTab(TabbedPanelItem):
     def __init__(self, **kwargs):
         super(TextTab, self).__init__(**kwargs)
         self.text = 'Text'
+        self.text_color_fg = (255, 255, 255)
+        self.text_color_bg = (0, 0, 0)
         self.text_box = GridLayout(cols=1)
         self.text_box.padding = 10
         self.text_box.spacing = 10
-        
+
+        self.color_spinner_fg = Spinner(text='White', values=('White', 'Black', 'Red', 'Green', 'Blue', 'Purple', 'Orange', 'Yellow'), size_hint_x=0.2)
+        self.color_spinner_fg.bind(text=self.set_foreground_color)
+        self.color_spinner_bg = Spinner(text='Black', values=('Black', 'White', 'Red', 'Green', 'Blue', 'Purple', 'Orange', 'Yellow'), size_hint_x=0.2)
+        self.color_spinner_bg.bind(text=self.set_background_color)
+
         box_1 = BoxLayout(orientation='horizontal')
         self.text_line_1 = TextInput(text='HELLO', multiline=False, size_hint_y=None, height=52)
         self.text_line_1.font_size = 32
         self.text_line_1.bind(on_touch_down=self.ontouch)
         self.check_scroll_1 = CheckBox(size_hint_x=None, width=50)
         self.check_fill_1 = CheckBox(size_hint_x=None, width=50)
+        
         box_options_1 = GridLayout(cols=2, size_hint_x=None, width=100)
         box_options_1.add_widget(Label(text='Scroll', size_hint_x=None, width=50))
         box_options_1.add_widget(Label(text='Fill', size_hint_x=None, width=50))
         box_options_1.add_widget(self.check_scroll_1)
-        box_options_1.add_widget(self.check_fill_1)        
+        box_options_1.add_widget(self.check_fill_1)
         box_1.add_widget(self.text_line_1)
         box_1.add_widget(box_options_1)
+        box_1.add_widget(self.color_spinner_fg)
         self.text_box.add_widget(box_1)
 
         box_2 = BoxLayout(orientation='horizontal')
@@ -225,13 +234,14 @@ class TextTab(TabbedPanelItem):
         self.text_line_2.bind(on_touch_down=self.ontouch)
         self.check_scroll_2 = CheckBox(size_hint_x=None, width=50)
         self.check_fill_2 = CheckBox(size_hint_x=None, width=50)
-        box_2.add_widget(self.text_line_2)
         box_options_2 = GridLayout(cols=2, size_hint_x=None, width=100)
         box_options_2.add_widget(Label(text='Scroll', size_hint_x=None, width=50))
         box_options_2.add_widget(Label(text='Fill', size_hint_x=None, width=50))
         box_options_2.add_widget(self.check_scroll_2)
-        box_options_2.add_widget(self.check_fill_2)   
+        box_options_2.add_widget(self.check_fill_2)
+        box_2.add_widget(self.text_line_2)
         box_2.add_widget(box_options_2)
+        box_2.add_widget(self.color_spinner_bg)
 
         self.text_box.add_widget(box_2)
 
@@ -266,22 +276,52 @@ class TextTab(TabbedPanelItem):
         )
         self.text_box.add_widget(self.kb)
 
+    def text_to_color(self, text):
+        if text == 'Black':
+            return (0, 0, 0)
+        elif text == 'White':
+            return (255, 255, 255)
+        elif text == 'Red':
+            return (255, 0, 0)
+        elif text == 'Green':
+            return (0, 255, 0)
+        elif text == 'Blue':
+            return (0, 0, 255)
+        elif text == 'Purple':
+            return (255, 0, 255)
+        elif text == 'Orange':
+            return (255, 165, 0)
+        elif text == 'Yellow':
+            return (255, 255, 0)
+
+    def set_foreground_color(self, instance, value):
+        color = self.text_to_color(value)
+        self.text_color_fg = color
+        self.color_spinner_fg.background_color = color
+
+    def set_background_color(self, instance, value):
+        color = self.text_to_color(value)
+        self.text_color_bg = color
+        self.color_spinner_bg.background_color = color
+
+
     def send_text(self, instance):
         if self.check_scroll_1.active:
             def scroll_text_in_background():
-                Matrix.scroll_text(text=self.text_line_1.text, foreground=(0, 255, 255), background=(0, 0, 0), fill=self.check_fill_1.active, blank=not self.check_fill_1.active)
+                Matrix.scroll_text(text=self.text_line_1.text, foreground=self.text_color_fg, background=self.text_color_bg, fill=self.check_fill_1.active, blank=True)
 
             Matrix.run_async(scroll_text_in_background)
 
         elif self.check_scroll_2.active:
             def scroll_text_in_background():
-                Matrix.scroll_text(text=self.text_line_2.text, foreground=(255, 0, 255), background=(0, 0, 0), fill=self.check_fill_2.active, blank=not self.check_fill_2.active)
+                Matrix.scroll_text(text=self.text_line_2.text, foreground=self.text_color_fg, background=self.text_color_bg, fill=self.check_fill_2.active, blank=True)
 
             Matrix.run_async(scroll_text_in_background)
+
         else:
             Matrix.textRenderer.clear()
-            Matrix.textRenderer.add_text(self.text_line_1.text, line=0)
-            Matrix.textRenderer.add_text(self.text_line_2.text, line=1)
+            Matrix.textRenderer.add_text(self.text_line_1.text, line=0, foreground=self.text_color_fg, background=self.text_color_bg)
+            Matrix.textRenderer.add_text(self.text_line_2.text, line=1, foreground=self.text_color_fg, background=self.text_color_bg)
             Matrix.pixels = Matrix.textRenderer.get_buffer()
             Matrix.send_pixels()
 

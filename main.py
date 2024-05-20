@@ -89,7 +89,7 @@ class FrackstockTab(TabbedPanelItem):
 
         serial_port_label = Label(text='Port:', size_hint_x=0.2)
         connection_box.add_widget(serial_port_label)
-        self.stock_serial_port_spinner = Spinner(text=str(serial_ports[0]), values=serial_ports)
+        self.stock_serial_port_spinner = Spinner(text=str("/dev/ttyAMC0"), values=serial_ports)
         self.stock_serial_port_spinner.size_hint_x = 1
         self.stock_serial_port_spinner.bind(on_press=self.scan)
         connection_box.add_widget(self.stock_serial_port_spinner)
@@ -187,7 +187,7 @@ class FrackstockTab(TabbedPanelItem):
                 #Matrix.scroll_text(text=msg, foreground=color, background=(0, 0, 0), fill=True, blank=True)
 
                 Matrix.textRenderer.clear()
-                Matrix.textRenderer.add_text(f"{hex(int(data['from']))}", line=0, foreground=color, background=(0, 0, 0))
+                Matrix.textRenderer.add_text(f" {hex(int(data['from']))}", line=0, foreground=color, background=(0, 0, 0))
                 Matrix.textRenderer.add_text(f" {data['beer']} BEER", line=1, foreground=color, background=(0, 0, 0))
                 Matrix.pixels = Matrix.textRenderer.get_buffer()
                 Matrix.send_pixels()

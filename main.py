@@ -31,6 +31,7 @@ from matrix_protocol import MatrixProtocol
 from ui.image_tab import ImageTab
 from animations import Animations
 from music import MusicAnalyzer
+from frackstock import Frackstock
 
 # Define the global variables
 VERSION = 0.4
@@ -69,6 +70,86 @@ if len(serial_ports) == 0:
     print("No serial ports found")
     serial_ports = ["/dev/tty/Nönö"]
     Matrix.simulation = True
+
+
+class FrackstockTab(TabbedPanelItem):
+
+    def __init__(self, **kwargs):
+        super(FrackstockTab, self).__init__(**kwargs)
+        self.text = 'Frackstock'
+        self.layout = BoxLayout(orientation='vertical')
+        self.layout.padding = 10
+        self.layout.spacing = 10
+        self.frackstock = None
+
+        connection_box = BoxLayout(orientation='horizontal', size_hint_y=None, height=70, spacing=10, padding=10)
+        connection_label = Label(text='Connection', font_size=48, size_hint_y=None, height=80)
+        self.layout.add_widget(connection_label)
+
+        serial_port_label = Label(text='Port:', size_hint_x=0.2)
+        connection_box.add_widget(serial_port_label)
+        self.stock_serial_port_spinner = Spinner(text=str(serial_ports[0]), values=serial_ports)
+        self.stock_serial_port_spinner.size_hint_x = 1
+        self.stock_serial_port_spinner.bind(on_press=self.scan)
+        connection_box.add_widget(self.stock_serial_port_spinner)
+
+        self.stock_connect_button = Button(text='Connect', size_hint_x=0.4)
+        self.stock_connect_button.bind(on_release=self.connect)
+        self.stock_connect_button.background_color = (0, 1, 0, 1)
+        connection_box.add_widget(self.stock_connect_button)
+
+        self.layout.add_widget(connection_box)
+
+        quick_actions_box = BoxLayout(orientation='horizontal', size_hint_y=None, height=70, spacing=10, padding=10)
+        quick_actions_label = Label(text='Radio Send', font_size=24)
+        self.target_address_slider = Slider(min=0, max=255, value=255, step=1)
+        self.target_address_slider.bind(value=self.set_target_address)
+        self.target_address_value = Label(text=str(hex(self.target_address_slider.value)))
+        send_button = Button(text='Send', size_hint_x=0.3, on_press=self.send)
+
+        quick_actions_box.add_widget(quick_actions_label)
+        quick_actions_box.add_widget(self.target_address_slider)
+        quick_actions_box.add_widget(self.target_address_value)
+        quick_actions_box.add_widget(send_button)
+
+        self.layout.add_widget(Label(text=''))
+
+        self.layout.add_widget(quick_actions_box)
+        self.add_widget(self.layout)
+
+    def set_target_address(self, instance, value):
+        value = int(value)
+        self.target_address_value.text = str(hex(value))
+
+    def scan(self, instance):
+        self.serial_ports = Matrix.scan_serial_ports()
+        if len(self.serial_ports) == 0:
+            self.serial_ports = ["/dev/tty/Nönö"]
+        self.stock_serial_port_spinner.values = self.serial_ports
+
+    def connect(self, instance):
+        action = instance.text
+        if action == "Connect":
+            port = self.stock_serial_port_spinner.text
+            self.frackstock = Frackstock(port=port)
+            self.frackstock.connect()
+            self.stock_connect_button.text = 'Disconnect'
+            self.stock_connect_button.background_color = (1, 0, 0, 1)
+        elif action == "Disconnect":
+            self.frackstock.disconnect()
+            self.stock_connect_button.text = 'Connect'
+            self.stock_connect_button.background_color = [0, 1, 0, 1]
+
+    def send(self, instance):
+        if self.frackstock is not None:
+            target_address = int(self.target_address_slider.value)
+            self.frackstock.radio_send(target_address)
+        else:
+            print("Frackstock not connected")
+
+    
+
+
 
 
 
@@ -755,6 +836,10 @@ class FrackMatrixApp(App):
         # Add a new tab named "Paint"
         paint_tab = PaintTab()
         tab_panel.add_widget(paint_tab)
+
+        # Add a new tab named "Frackstock"
+        frackstock_tab = FrackstockTab()
+        tab_panel.add_widget(frackstock_tab)
 
         # Add a new tab named "Debug"
         debug_tab = DebugTab()

@@ -34,7 +34,7 @@ from music import MusicAnalyzer
 from frackstock import Frackstock
 
 # Define the global variables
-VERSION = 0.4
+VERSION = 0.5
 
 WIDTH=50
 HEIGHT=20
@@ -742,7 +742,7 @@ class DebugTab(TabbedPanelItem):
             
     def poweroff(self, instance):
         try:
-            if self.pin_input.text == '1234':
+            if self.pin_input.text == '6291':
                 import os
                 print("Powering off...")
                 os.system("sudo poweroff")

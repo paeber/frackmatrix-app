@@ -83,7 +83,7 @@ class FrackstockTab(TabbedPanelItem):
         self.frackstock = None
 
         connection_box = BoxLayout(orientation='horizontal', size_hint_y=None, height=70, spacing=10, padding=10)
-        connection_label = Label(text='Connection', font_size=48, size_hint_y=None, height=80)
+        connection_label = Label(text='Connection (ACM0)', font_size=48, size_hint_y=None, height=80)
         self.layout.add_widget(connection_label)
 
         serial_port_label = Label(text='Port:', size_hint_x=0.2)
@@ -151,7 +151,7 @@ class FrackstockTab(TabbedPanelItem):
 
     def send(self, instance):
         if self.frackstock is not None:
-            target_address = int(self.target_address_slider.value)
+            target_address = int(self.target_address_value.text, 16)
             self.frackstock.radio_send(target_address)
         else:
             print("Frackstock not connected")
@@ -725,7 +725,7 @@ class HomeTab(TabbedPanelItem):
         connection_box = BoxLayout(orientation='horizontal', size_hint_y=None, height=70, spacing=10, padding=10)
 
         # Add connection setup UI
-        connection_label = Label(text='Connection', font_size=48, size_hint_y=None, height=80)
+        connection_label = Label(text='Connection (USB0)', font_size=48, size_hint_y=None, height=80)
         home_box.add_widget(connection_label)
 
         serial_port_label = Label(text='Port:', size_hint_x=0.2)

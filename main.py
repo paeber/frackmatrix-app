@@ -100,25 +100,34 @@ class FrackstockTab(TabbedPanelItem):
 
         self.layout.add_widget(connection_box)
 
-        quick_actions_box = BoxLayout(orientation='horizontal', size_hint_y=None, height=70, spacing=10, padding=10)
+        quick_actions_box = BoxLayout(orientation='horizontal', spacing=10, padding=10)
         quick_actions_label = Label(text='Radio Send', font_size=24)
-        self.target_address_slider = Slider(min=0, max=255, value=255, step=1)
-        self.target_address_slider.bind(value=self.set_target_address)
-        self.target_address_value = Label(text=str(hex(self.target_address_slider.value)))
+        self.target_address_slider_high = Slider(min=0, max=15, value=15, step=1)
+        self.target_address_slider_low = Slider(min=0, max=15, value=15, step=1)
+        self.target_address_slider_high.bind(value=self.set_target_address)
+        self.target_address_slider_low.bind(value=self.set_target_address)
+        self.target_address_value = Label(text=str(hex(255)), font_size=24)
         send_button = Button(text='Send', size_hint_x=0.3, on_press=self.send)
 
         quick_actions_box.add_widget(quick_actions_label)
-        quick_actions_box.add_widget(self.target_address_slider)
+
+        slider_box = BoxLayout(orientation='vertical')
+        slider_box.add_widget(self.target_address_slider_high)
+        slider_box.add_widget(self.target_address_slider_low)
+
+        quick_actions_box.add_widget(slider_box)
         quick_actions_box.add_widget(self.target_address_value)
         quick_actions_box.add_widget(send_button)
 
-        self.layout.add_widget(Label(text=''))
+        #self.layout.add_widget(Label(text=''))
 
         self.layout.add_widget(quick_actions_box)
         self.add_widget(self.layout)
 
     def set_target_address(self, instance, value):
-        value = int(value)
+        high = int(self.target_address_slider_high.value)
+        low = int(self.target_address_slider_low.value)
+        value = int((high << 4) | low)
         self.target_address_value.text = str(hex(value))
 
     def scan(self, instance):
@@ -799,6 +808,7 @@ class HomeTab(TabbedPanelItem):
 # Define the application class
 class FrackMatrixApp(App):
     matrix = Matrix
+    active_tab = "Home"
 
     def __init__(self, **kwargs):
         super(FrackMatrixApp, self).__init__(**kwargs)
@@ -846,12 +856,14 @@ class FrackMatrixApp(App):
         tab_panel.add_widget(debug_tab)
 
         tab_panel.default_tab = home_tab
+
+        tab_panel.bind(current_tab=self.on_tab_switch)
         screen.add_widget(tab_panel)
         return screen
     
-    def reset_pixel_buttons(self, instance):
-        for pixel_button in self.pixel_buttons:
-            pixel_button.state = 'normal'  # set button state to up
+    def on_tab_switch(self, instance, value):
+        print(f'Tab switched from {self.active_tab} to {value.text}')
+        self.active_tab = value.text
 
 
 

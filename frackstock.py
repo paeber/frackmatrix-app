@@ -43,20 +43,20 @@ class Frackstock:
             if self.ser.in_waiting > 0:
                 message = self.ser.readline().decode("utf-8").strip()
 
-            if message:
-                if "[RF] RX: {" in message:
-                    message = message.replace("[RF] RX: {", "").replace("}", "")
-                    message = message.split(", ")
-                    data = {}
-                    for i in message:
-                        i = i.split(": ")
-                        data[i[0]] = i[1]
+                if message:
+                    if "[RF] RX: {" in message:
+                        message = message.replace("[RF] RX: {", "").replace("}", "")
+                        message = message.split(", ")
+                        data = {}
+                        for i in message:
+                            i = i.split(": ")
+                            data[i[0]] = i[1]
+                        
+                        self.last_data = data
+                        self.last_data_time = time.time()
+                        self.new_data_available = True
                     
-                    self.last_data = data
-                    self.last_data_time = time.time()
-                    self.new_data_available = True
-                    
-            time.sleep(.5)  # sleep
+            time.sleep(.1)  # sleep
 
     def get_serial(self, ser: serial.Serial, cmd: str):
         cmd = (cmd + "\n").encode("utf-8")

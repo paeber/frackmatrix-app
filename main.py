@@ -81,9 +81,10 @@ class FrackstockTab(TabbedPanelItem):
         self.layout.padding = 10
         self.layout.spacing = 10
         self.frackstock = None
+        self.check_event = None
 
         connection_box = BoxLayout(orientation='horizontal', size_hint_y=None, height=70, spacing=10, padding=10)
-        connection_label = Label(text='Connection (ACM0)', font_size=48, size_hint_y=None, height=80)
+        connection_label = Label(text='Connection (ACM0)', font_size=36)
         self.layout.add_widget(connection_label)
 
         serial_port_label = Label(text='Port:', size_hint_x=0.2)
@@ -98,16 +99,20 @@ class FrackstockTab(TabbedPanelItem):
         self.stock_connect_button.background_color = (0, 1, 0, 1)
         connection_box.add_widget(self.stock_connect_button)
 
+        self.listener_button = ToggleButton(text='Listen', size_hint_x=0.4)
+        self.listener_button.bind(on_press=self.frackstock_listen)
+        connection_box.add_widget(self.listener_button)
+
         self.layout.add_widget(connection_box)
 
         quick_actions_box = BoxLayout(orientation='horizontal', spacing=10, padding=10)
-        quick_actions_label = Label(text='Radio Send', font_size=24)
+        quick_actions_label = Label(text='Radio', font_size=24)
         self.target_address_slider_high = Slider(min=0, max=15, value=15, step=1)
         self.target_address_slider_low = Slider(min=0, max=15, value=15, step=1)
         self.target_address_slider_high.bind(value=self.set_target_address)
         self.target_address_slider_low.bind(value=self.set_target_address)
         self.target_address_value = Label(text=str(hex(255)), font_size=24)
-        send_button = Button(text='Send', size_hint_x=0.3, on_press=self.send)
+        send_button = Button(text='Send', size_hint_x=0.5, on_press=self.send)
 
         quick_actions_box.add_widget(quick_actions_label)
 
@@ -119,7 +124,7 @@ class FrackstockTab(TabbedPanelItem):
         quick_actions_box.add_widget(self.target_address_value)
         quick_actions_box.add_widget(send_button)
 
-        #self.layout.add_widget(Label(text=''))
+        self.layout.add_widget(Label(text=''))
 
         self.layout.add_widget(quick_actions_box)
         self.add_widget(self.layout)
@@ -155,6 +160,37 @@ class FrackstockTab(TabbedPanelItem):
             self.frackstock.radio_send(target_address)
         else:
             print("Frackstock not connected")
+
+    def frackstock_listen(self, instance):
+        if self.frackstock is None:
+            print("Frackstock not connected")
+            instance.state = 'normal'
+            return
+        
+        if instance.state == 'down':
+            self.check_event = Clock.schedule_interval(self.frackstock_check, 0.5)
+        else:
+            Clock.unschedule(self.check_event)
+            self.check_event = None
+
+    def frackstock_check(self, dt):
+        if self.frackstock is not None:
+            if self.frackstock.isDataAvailable():
+                data = self.frackstock.getData()
+                print(data)
+                try:
+                    r, g, b = data['color'].split(' ')
+                    color = (int(r), int(g), int(b))
+                except Exception as e:
+                    color = (0, 255, 0)
+                msg = f"{hex(int(data['from']))[:2]}: {data['beer']}"
+                #Matrix.scroll_text(text=msg, foreground=color, background=(0, 0, 0), fill=True, blank=True)
+
+                Matrix.textRenderer.clear()
+                Matrix.textRenderer.add_text(f"{hex(int(data['from']))}", line=0, foreground=color, background=(0, 0, 0))
+                Matrix.textRenderer.add_text(f" {data['beer']} BEER", line=1, foreground=color, background=(0, 0, 0))
+                Matrix.pixels = Matrix.textRenderer.get_buffer()
+                Matrix.send_pixels()
 
     
 
@@ -725,7 +761,7 @@ class HomeTab(TabbedPanelItem):
         connection_box = BoxLayout(orientation='horizontal', size_hint_y=None, height=70, spacing=10, padding=10)
 
         # Add connection setup UI
-        connection_label = Label(text='Connection (USB0)', font_size=48, size_hint_y=None, height=80)
+        connection_label = Label(text='Matrix Connection (USB0)', font_size=36, size_hint_y=None, height=80)
         home_box.add_widget(connection_label)
 
         serial_port_label = Label(text='Port:', size_hint_x=0.2)

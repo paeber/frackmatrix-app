@@ -270,7 +270,7 @@ class PaintTab(TabbedPanelItem):
     def live_canvas(self, instance):
         if instance.state == 'down':
             # Call self.save_canvas every 0.1 seconds
-            self.live_event = Clock.schedule_interval(self.save_canvas, 0.1)
+            self.live_event = Clock.schedule_interval(self.save_canvas, 0.05)
         else:
             # Stop calling self.save_canvas
             self.live_event.cancel()

@@ -1,5 +1,13 @@
 # FrackMatrix
- Led Matrix Controller with Touch UI created in Python with Kivy. The target system is a Raspberry Pi 4. It is used in combination with an Arduino Uno which is hooked up with a bunch of WS2812B (or similar) LEDs as a matrix. Commands can be sent from the Pi to the Arduino through serial over USB.
+Led Matrix Controller with Touch UI created in Python with Kivy. The target system is a Raspberry Pi 4. It is used in combination with an Arduino Uno which is hooked up with a bunch of WS2812B (or similar) LEDs as a matrix. Commands can be sent from the Pi to the Arduino through serial over USB.
+
+## Features
+
+- **Animations** Show signales as on a oszilloscope (sinde, saw)
+- **Music** Sample audio through an USB Audio Interface and plot the peak of the music on the matrix. A selection of three effects is available
+- **Text** Enter text to send to the matrix, scrolling, scaled or just steady.
+- **Image** loading from disk
+- **Paint** on touchscreen to the matrix
 
 ## Setup
 
@@ -32,7 +40,13 @@
 
 On the home screen, the serial port can be selected. Opening the spinner with the ports triggers a refresh of available ports.
 
-<img src="./assets/home-screen.png" alt="Home Screen" style="zoom: 67%;" />
+![Home Screen](./assets/home-screen.png)
+
+## Music
+
+
+
+![Music Screen](./assets/music-screen.png)
 
 ## Text
 
@@ -45,4 +59,4 @@ On the home screen, the serial port can be selected. Opening the spinner with th
 
 Paint screen allows to draw inside a frame representing the matrix. Color can be changed with the shortcuts or more detailed with color picker. The image is sent to the matrix by pressing "Save". A "Live" mode plots the image to the matrix 10 times per second.
 
-<img src="./assets/paint-screen.png" alt="Paint Screen" style="zoom:67%;" />
+![CleanShot 2024-05-21 at 08.06.58](./assets/paint-screen.png)
